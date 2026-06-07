@@ -19,7 +19,12 @@ const loadUsers = (): User[] => {
 };
 
 const saveUsers = (users: User[]) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  try {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  } catch {
+    const usersWithoutAvatars = users.map((user) => ({ ...user, avatar: undefined }));
+    localStorage.setItem(USERS_KEY, JSON.stringify(usersWithoutAvatars));
+  }
 };
 
 export const useAuth = () => {
@@ -88,11 +93,16 @@ export const useAuth = () => {
       },
       updateProfile: (profile: Pick<User, "name" | "avatar">) => {
         if (!currentUserId) return;
-        setUsers((current) =>
-          current.map((user) =>
-            user.id === currentUserId ? { ...user, name: profile.name.trim() || user.name, avatar: profile.avatar } : user,
-          ),
+        setError("");
+        const nextUsers = users.map((user) =>
+          user.id === currentUserId ? { ...user, name: profile.name.trim() || user.name, avatar: profile.avatar } : user,
         );
+        try {
+          localStorage.setItem(USERS_KEY, JSON.stringify(nextUsers));
+          setUsers(nextUsers);
+        } catch {
+          setError("Аватар слишком большой. Попробуй выбрать другое фото.");
+        }
       },
       clearError: () => setError(""),
     }),

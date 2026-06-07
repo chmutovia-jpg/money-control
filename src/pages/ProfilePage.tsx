@@ -54,13 +54,49 @@ export const ProfilePage = ({ user, financeState, onImportData, onUpdateProfile,
   const [avatar, setAvatar] = useState(user.avatar);
   const [saved, setSaved] = useState(false);
   const [importStatus, setImportStatus] = useState("");
+  const [avatarStatus, setAvatarStatus] = useState("");
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadAvatar = (file?: File) => {
+  const uploadAvatar = async (file?: File) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setAvatar(String(reader.result));
-    reader.readAsDataURL(file);
+    setAvatarStatus("Готовим аватар...");
+    if (!file.type.startsWith("image/")) {
+      setAvatarStatus("Выбери файл изображения.");
+      return;
+    }
+
+    const imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      const size = 240;
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) {
+        setAvatarStatus("Не удалось обработать изображение.");
+        URL.revokeObjectURL(imageUrl);
+        return;
+      }
+
+      const side = Math.min(image.width, image.height);
+      const sourceX = (image.width - side) / 2;
+      const sourceY = (image.height - side) / 2;
+      canvas.width = size;
+      canvas.height = size;
+      context.drawImage(image, sourceX, sourceY, side, side, 0, 0, size, size);
+      setAvatar(canvas.toDataURL("image/webp", 0.78));
+      setAvatarStatus("Аватар готов. Нажми «Сохранить».");
+      URL.revokeObjectURL(imageUrl);
+    };
+    image.onerror = () => {
+      setAvatarStatus("Не удалось открыть изображение.");
+      URL.revokeObjectURL(imageUrl);
+    };
+    image.src = imageUrl;
+  };
+
+  const removeAvatar = () => {
+    setAvatar(undefined);
+    setAvatarStatus("Аватар удалён. Нажми «Сохранить».");
   };
 
   const submit = (event: React.FormEvent) => {
@@ -130,12 +166,14 @@ export const ProfilePage = ({ user, financeState, onImportData, onUpdateProfile,
             </Field>
 
             {saved ? <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm font-medium text-emerald-200">Профиль сохранён.</div> : null}
+            {avatarStatus ? <div className="rounded-2xl border border-blue-300/20 bg-blue-400/10 px-4 py-3 text-sm font-medium text-blue-100">{avatarStatus}</div> : null}
 
             <div className="flex flex-wrap gap-2">
               <button className={buttonClass} type="submit">
                 <Save size={18} />
                 Сохранить
               </button>
+              {avatar ? <button className={ghostButtonClass} type="button" onClick={removeAvatar}>Удалить аватар</button> : null}
               <button className={ghostButtonClass} type="button" onClick={onLogout}>
                 <LogOut size={18} />
                 Выйти
