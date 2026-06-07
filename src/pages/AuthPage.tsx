@@ -2,15 +2,17 @@ import { Lock, LogIn, PiggyBank, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Card } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
+import type { AppTheme } from "../hooks/useTheme";
 
 interface AuthPageProps {
+  theme: AppTheme;
   error: string;
   onLogin: (data: { email: string; password: string }) => boolean;
   onRegister: (data: { name: string; email: string; password: string }) => boolean;
   onClearError: () => void;
 }
 
-export const AuthPage = ({ error, onLogin, onRegister, onClearError }: AuthPageProps) => {
+export const AuthPage = ({ theme, error, onLogin, onRegister, onClearError }: AuthPageProps) => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
@@ -29,7 +31,7 @@ export const AuthPage = ({ error, onLogin, onRegister, onClearError }: AuthPageP
   };
 
   return (
-    <div className="app-shell flex min-h-screen items-center justify-center px-4 py-10 text-ink">
+    <div className="app-shell flex min-h-screen items-center justify-center px-4 py-10 text-ink" data-theme={theme}>
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="brand-orb mb-4 flex h-16 w-16 items-center justify-center rounded-5xl text-white">

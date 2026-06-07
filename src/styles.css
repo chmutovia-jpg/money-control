@@ -245,3 +245,98 @@ select option {
   color: #f4f7fb !important;
   backdrop-filter: blur(20px);
 }
+
+.app-shell[data-theme="light"] {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(96, 165, 250, 0.2), transparent 30rem),
+    radial-gradient(circle at 88% 12%, rgba(20, 184, 166, 0.14), transparent 28rem),
+    linear-gradient(180deg, #f6f8fc 0%, #eef3f9 52%, #e8eef7 100%) !important;
+  color: #0f172a;
+}
+
+.app-shell[data-theme="light"] .glass-panel,
+.app-shell[data-theme="light"] .glass-sidebar,
+.app-shell[data-theme="light"] .glass-bottom-nav {
+  border-color: rgba(15, 23, 42, 0.08);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.66)),
+    rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 0 0 1px rgba(59, 130, 246, 0.05),
+    0 18px 44px rgba(15, 23, 42, 0.12);
+}
+
+.app-shell[data-theme="light"] .glass-panel::before,
+.app-shell[data-theme="light"] .glass-sidebar::before,
+.app-shell[data-theme="light"] .glass-bottom-nav::before {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(255, 255, 255, 0.7), transparent 22%),
+    radial-gradient(circle at 92% 10%, rgba(96, 165, 250, 0.16), transparent 28%),
+    linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.35) 46%, transparent 56%);
+  opacity: 0.85;
+}
+
+.app-shell[data-theme="light"] .text-ink,
+.app-shell[data-theme="light"] .text-slate-300,
+.app-shell[data-theme="light"] .text-white {
+  color: #0f172a !important;
+}
+
+.app-shell[data-theme="light"] .text-muted,
+.app-shell[data-theme="light"] .text-slate-500,
+.app-shell[data-theme="light"] .text-slate-600 {
+  color: #64748b !important;
+}
+
+.app-shell[data-theme="light"] .bg-slate-50,
+.app-shell[data-theme="light"] .bg-slate-100 {
+  background-color: rgba(15, 23, 42, 0.045) !important;
+}
+
+.app-shell[data-theme="light"] .border-white,
+.app-shell[data-theme="light"] .border-slate-100,
+.app-shell[data-theme="light"] .border-slate-200,
+.app-shell[data-theme="light"] .border-white\/10,
+.app-shell[data-theme="light"] .border-white\/15 {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.app-shell[data-theme="light"] input,
+.app-shell[data-theme="light"] select,
+.app-shell[data-theme="light"] textarea {
+  color-scheme: light;
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+
+.app-shell[data-theme="light"] select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.app-shell[data-theme="light"] .bg-white\/90 {
+  background-color: rgba(15, 23, 42, 0.9) !important;
+}
+
+.app-shell[data-theme="light"] .bg-white\/90.text-slate-950 {
+  color: #ffffff !important;
+}
+
+.app-shell[data-theme="light"] .hover\:bg-white\/10:hover,
+.app-shell[data-theme="light"] .hover\:bg-white\/15:hover {
+  background-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.app-shell[data-theme="light"] .recharts-cartesian-axis-tick-value,
+.app-shell[data-theme="light"] .recharts-legend-item-text {
+  fill: #64748b;
+  color: #64748b !important;
+}
+
+.app-shell[data-theme="light"] .recharts-default-tooltip {
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #0f172a !important;
+}

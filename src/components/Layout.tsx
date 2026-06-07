@@ -1,6 +1,7 @@
 import { BarChart3, CalendarDays, CreditCard, Gauge, Home, LogOut, PiggyBank, Receipt, Repeat, Target, TrendingUp, UserCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { PageKey } from "../App";
+import type { AppTheme } from "../hooks/useTheme";
 import type { User } from "../types";
 
 const navItems: Array<{ key: PageKey; label: string; icon: LucideIcon }> = [
@@ -20,15 +21,17 @@ export const Layout = ({
   setActivePage,
   user,
   onLogout,
+  theme,
   children,
 }: {
   activePage: PageKey;
   setActivePage: (page: PageKey) => void;
   user: User;
   onLogout: () => void;
+  theme: AppTheme;
   children: React.ReactNode;
 }) => (
-  <div className="app-shell min-h-screen bg-surface text-ink">
+  <div className="app-shell min-h-screen bg-surface text-ink" data-theme={theme}>
     <aside className="glass-sidebar fixed left-0 top-0 hidden h-screen w-72 flex-col p-6 shadow-soft backdrop-blur-2xl lg:flex">
       <div className="flex shrink-0 items-center gap-3">
         <div className="brand-orb flex h-12 w-12 items-center justify-center rounded-3xl text-white">

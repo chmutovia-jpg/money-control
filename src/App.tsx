@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Layout } from "./components/Layout";
 import { useAuth } from "./hooks/useAuth";
 import { useFinanceData } from "./hooks/useFinanceData";
+import { useTheme } from "./hooks/useTheme";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { AuthPage } from "./pages/AuthPage";
 import { BudgetsPage } from "./pages/BudgetsPage";
@@ -18,10 +19,11 @@ export type PageKey = "dashboard" | "income" | "expenses" | "subscriptions" | "d
 const App = () => {
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
   const auth = useAuth();
+  const theme = useTheme();
   const finance = useFinanceData(auth.currentUser?.id ?? null);
 
   if (!auth.currentUser) {
-    return <AuthPage error={auth.error} onLogin={auth.login} onRegister={auth.register} onClearError={auth.clearError} />;
+    return <AuthPage theme={theme.theme} error={auth.error} onLogin={auth.login} onRegister={auth.register} onClearError={auth.clearError} />;
   }
 
   const page = {
@@ -34,10 +36,10 @@ const App = () => {
     budgets: <BudgetsPage budgets={finance.state.budgets} transactions={finance.state.transactions} onAdd={finance.addBudget} onUpdate={finance.updateBudget} onDelete={finance.deleteBudget} />,
     calendar: <CalendarPage state={finance.state} />,
     analytics: <AnalyticsPage state={finance.state} />,
-    profile: <ProfilePage user={auth.currentUser} financeState={finance.state} onImportData={finance.replaceAll} onUpdateProfile={auth.updateProfile} onLogout={auth.logout} />,
+    profile: <ProfilePage user={auth.currentUser} financeState={finance.state} theme={theme.theme} onThemeChange={theme.setTheme} onImportData={finance.replaceAll} onUpdateProfile={auth.updateProfile} onLogout={auth.logout} />,
   }[activePage];
 
-  return <Layout activePage={activePage} setActivePage={setActivePage} user={auth.currentUser} onLogout={auth.logout}>{page}</Layout>;
+  return <Layout activePage={activePage} setActivePage={setActivePage} user={auth.currentUser} onLogout={auth.logout} theme={theme.theme}>{page}</Layout>;
 };
 
 export default App;

@@ -1,13 +1,16 @@
-import { Camera, Download, FileJson, LogOut, Save, Upload, UserCircle } from "lucide-react";
+import { Camera, Download, FileJson, LogOut, Moon, Save, Sun, Upload, UserCircle } from "lucide-react";
 import { useRef, useState } from "react";
 import { Card, SectionHeader } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
+import type { AppTheme } from "../hooks/useTheme";
 import type { FinanceState, User } from "../types";
 import { formatDate } from "../utils/format";
 
 interface ProfilePageProps {
   user: User;
   financeState: FinanceState;
+  theme: AppTheme;
+  onThemeChange: (theme: AppTheme) => void;
   onImportData: (state: FinanceState) => void;
   onUpdateProfile: (profile: Pick<User, "name" | "avatar">) => void;
   onLogout: () => void;
@@ -49,7 +52,7 @@ const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => (
   budgets: state.budgets ?? [],
 });
 
-export const ProfilePage = ({ user, financeState, onImportData, onUpdateProfile, onLogout }: ProfilePageProps) => {
+export const ProfilePage = ({ user, financeState, theme, onThemeChange, onImportData, onUpdateProfile, onLogout }: ProfilePageProps) => {
   const [name, setName] = useState(user.name);
   const [avatar, setAvatar] = useState(user.avatar);
   const [saved, setSaved] = useState(false);
@@ -180,6 +183,28 @@ export const ProfilePage = ({ user, financeState, onImportData, onUpdateProfile,
               </button>
             </div>
           </form>
+        </Card>
+
+        <Card>
+          <SectionHeader title="Тема интерфейса" />
+          <div className="grid grid-cols-2 gap-2 rounded-3xl bg-slate-50 p-1">
+            <button
+              type="button"
+              onClick={() => onThemeChange("dark")}
+              className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${theme === "dark" ? "bg-blue-500 text-white shadow-card" : "text-muted hover:bg-white/10"}`}
+            >
+              <Moon size={18} />
+              Тёмная
+            </button>
+            <button
+              type="button"
+              onClick={() => onThemeChange("light")}
+              className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${theme === "light" ? "bg-blue-500 text-white shadow-card" : "text-muted hover:bg-white/10"}`}
+            >
+              <Sun size={18} />
+              Светлая
+            </button>
+          </div>
         </Card>
 
         <Card>
