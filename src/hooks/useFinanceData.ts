@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CategoryBudget, Debt, FinanceState, SavingGoal, Subscription, Transaction } from "../types";
 import { demoData } from "../utils/demoData";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "../utils/storage";
 
 const LEGACY_STORAGE_KEY = "money-control-state";
 
@@ -22,26 +23,26 @@ const normalizeState = (state: Partial<FinanceState>): FinanceState => ({
 
 const loadInitialState = (userId: string | null): FinanceState => {
   const storageKey = getStorageKey(userId);
-  const stored = localStorage.getItem(storageKey);
+  const stored = safeGetItem(storageKey);
   if (!stored) {
-    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    const legacy = safeGetItem(LEGACY_STORAGE_KEY);
     if (userId && legacy) {
       try {
         const parsedLegacy = normalizeState(JSON.parse(legacy) as Partial<FinanceState>);
-        localStorage.setItem(storageKey, JSON.stringify(parsedLegacy));
+        safeSetItem(storageKey, JSON.stringify(parsedLegacy));
         return parsedLegacy;
       } catch {
-        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        safeRemoveItem(LEGACY_STORAGE_KEY);
       }
     }
-    localStorage.setItem(storageKey, JSON.stringify(demoData));
+    safeSetItem(storageKey, JSON.stringify(demoData));
     return demoData;
   }
 
   try {
     return normalizeState(JSON.parse(stored) as Partial<FinanceState>);
   } catch {
-    localStorage.setItem(storageKey, JSON.stringify(demoData));
+    safeSetItem(storageKey, JSON.stringify(demoData));
     return demoData;
   }
 };
@@ -54,7 +55,7 @@ export const useFinanceData = (userId: string | null) => {
   }, [userId]);
 
   useEffect(() => {
-    if (userId) localStorage.setItem(getStorageKey(userId), JSON.stringify(state));
+    if (userId) safeSetItem(getStorageKey(userId), JSON.stringify(state));
   }, [state, userId]);
 
   const api = useMemo(

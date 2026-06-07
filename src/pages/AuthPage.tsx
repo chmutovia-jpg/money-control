@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
 import type { AppTheme } from "../hooks/useTheme";
+import { clearMoneyControlStorage } from "../utils/storage";
 
 interface AuthPageProps {
   theme: AppTheme;
@@ -86,6 +87,16 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onClearError }: Au
         >
           <Lock size={17} />
           {mode === "login" ? "У меня ещё нет аккаунта" : "У меня уже есть аккаунт"}
+        </button>
+        <button
+          className="mt-3 w-full rounded-2xl px-4 py-3 text-sm font-semibold text-muted transition hover:bg-white/10"
+          type="button"
+          onClick={() => {
+            clearMoneyControlStorage();
+            window.location.reload();
+          }}
+        >
+          Сбросить данные приложения
         </button>
       </div>
     </div>

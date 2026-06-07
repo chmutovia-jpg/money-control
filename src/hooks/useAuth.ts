@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "../types";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "../utils/storage";
 
 const USERS_KEY = "money-control-users";
 const SESSION_KEY = "money-control-session";
@@ -17,16 +18,18 @@ const normalizeUser = (user: User): User => ({
 
 const loadUsers = (): User[] => {
   try {
-    return (JSON.parse(localStorage.getItem(USERS_KEY) ?? "[]") as User[]).map(normalizeUser);
+    return (JSON.parse(safeGetItem(USERS_KEY) ?? "[]") as User[]).map(normalizeUser);
   } catch {
-    localStorage.removeItem(USERS_KEY);
+    safeRemoveItem(USERS_KEY);
     return [];
   }
 };
 
 const writeUsers = (users: User[]) => {
-  localStorage.removeItem(USERS_KEY);
-  localStorage.setItem(USERS_KEY, JSON.stringify(users.map(normalizeUser)));
+  safeRemoveItem(USERS_KEY);
+  if (!safeSetItem(USERS_KEY, JSON.stringify(users.map(normalizeUser)))) {
+    throw new Error("storage write failed");
+  }
 };
 
 const saveUsers = (users: User[]) => {
@@ -37,14 +40,14 @@ const saveUsers = (users: User[]) => {
     try {
       writeUsers(usersWithoutAvatars);
     } catch {
-      localStorage.removeItem(USERS_KEY);
+      safeRemoveItem(USERS_KEY);
     }
   }
 };
 
 export const useAuth = () => {
   const [users, setUsers] = useState<User[]>(loadUsers);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(() => localStorage.getItem(SESSION_KEY));
+  const [currentUserId, setCurrentUserId] = useState<string | null>(() => safeGetItem(SESSION_KEY));
   const [error, setError] = useState("");
 
   const currentUser = users.find((user) => user.id === currentUserId) ?? null;
@@ -55,10 +58,10 @@ export const useAuth = () => {
 
   useEffect(() => {
     try {
-      if (currentUserId) localStorage.setItem(SESSION_KEY, currentUserId);
-      else localStorage.removeItem(SESSION_KEY);
+      if (currentUserId) safeSetItem(SESSION_KEY, currentUserId);
+      else safeRemoveItem(SESSION_KEY);
     } catch {
-      localStorage.removeItem(SESSION_KEY);
+      safeRemoveItem(SESSION_KEY);
     }
   }, [currentUserId]);
 
