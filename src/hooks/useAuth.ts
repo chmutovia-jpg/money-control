@@ -93,6 +93,7 @@ export const useAuth = () => {
           email: cleanEmail,
           password,
           createdAt: new Date().toISOString(),
+          onboardingCompleted: false,
         };
         setUsers((current) => [user, ...current]);
         setCurrentUserId(user.id);
@@ -109,6 +110,22 @@ export const useAuth = () => {
         setCurrentUserId(user.id);
         return true;
       },
+      loginWithPin: (pin: string) => {
+        setError("");
+        const user = users.find((item) => item.pin && item.pin === pin);
+        if (!user) {
+          setError("PIN не найден.");
+          return false;
+        }
+        setCurrentUserId(user.id);
+        return true;
+      },
+      setPin: (pin: string) => {
+        if (!currentUserId || pin.length < 4) return;
+        const nextUsers = users.map((user) => (user.id === currentUserId ? { ...user, pin } : user));
+        saveUsers(nextUsers);
+        setUsers(nextUsers);
+      },
       logout: () => {
         setError("");
         setCurrentUserId(null);
@@ -120,6 +137,7 @@ export const useAuth = () => {
           email: "demo@money-control.local",
           password: "demo123",
           createdAt: new Date().toISOString(),
+          onboardingCompleted: true,
         };
         const nextUsers = [demoUser, ...users.filter((user) => user.id !== demoUser.id)];
         saveUsers(nextUsers);
@@ -144,6 +162,12 @@ export const useAuth = () => {
           setUsers(withoutAvatar);
           setError("Телефон не смог сохранить аватар. Фото убрано, остальные данные сохранены.");
         }
+      },
+      completeOnboarding: () => {
+        if (!currentUserId) return;
+        const nextUsers = users.map((user) => (user.id === currentUserId ? { ...user, onboardingCompleted: true } : user));
+        saveUsers(nextUsers);
+        setUsers(nextUsers);
       },
       clearError: () => setError(""),
     }),

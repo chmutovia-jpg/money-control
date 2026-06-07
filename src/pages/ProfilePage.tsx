@@ -14,6 +14,7 @@ interface ProfilePageProps {
   onThemeChange: (theme: AppTheme) => void;
   onImportData: (state: FinanceState) => void;
   onUpdateProfile: (profile: Pick<User, "name" | "avatar">) => void;
+  onSetPin: (pin: string) => void;
   onLogout: () => void;
 }
 
@@ -51,14 +52,16 @@ const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => (
   debts: state.debts ?? [],
   goals: state.goals ?? [],
   budgets: state.budgets ?? [],
+  accounts: state.accounts?.length ? state.accounts : [{ id: "main", name: "Основной счёт", type: "card", balance: 0, currency: "RUB" }],
 });
 
-export const ProfilePage = ({ user, financeState, theme, authError, onThemeChange, onImportData, onUpdateProfile, onLogout }: ProfilePageProps) => {
+export const ProfilePage = ({ user, financeState, theme, authError, onThemeChange, onImportData, onUpdateProfile, onSetPin, onLogout }: ProfilePageProps) => {
   const [name, setName] = useState(user.name);
   const [avatar, setAvatar] = useState(user.avatar);
   const [saved, setSaved] = useState(false);
   const [importStatus, setImportStatus] = useState("");
   const [avatarStatus, setAvatarStatus] = useState("");
+  const [pin, setPin] = useState("");
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const uploadAvatar = async (file?: File) => {
@@ -271,6 +274,10 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
         <Card>
           <SectionHeader title="Безопасность" />
           <p className="text-sm text-muted">Пароль и сессия хранятся локально. Для личного ежедневного использования этого достаточно, но для синхронизации между устройствами понадобится backend.</p>
+          <form className="mt-4 flex gap-2" onSubmit={(e) => { e.preventDefault(); onSetPin(pin); setPin(""); }}>
+            <input className={inputClass} inputMode="numeric" minLength={4} placeholder="PIN для быстрого входа" value={pin} onChange={(e) => setPin(e.target.value)} />
+            <button className={buttonClass} type="submit">Сохранить PIN</button>
+          </form>
           <button className={`${ghostButtonClass} mt-4`} type="button" onClick={onLogout}>
             <LogOut size={18} />
             Выйти из аккаунта

@@ -1,8 +1,9 @@
-import { CalendarDays, CreditCard, Gauge, Repeat, Target } from "lucide-react";
+import { CalendarDays, CreditCard, Gauge, Repeat, Target, WalletCards } from "lucide-react";
 import type { PageKey } from "../App";
 
 const items: Array<{ page: PageKey; title: string; text: string; icon: typeof Repeat }> = [
   { page: "subscriptions", title: "Подписки", text: "Регулярные списания", icon: Repeat },
+  { page: "accounts", title: "Счета", text: "Карты, наличные и накопления", icon: WalletCards },
   { page: "debts", title: "Долги", text: "Кому и когда вернуть", icon: CreditCard },
   { page: "goals", title: "Цели", text: "Накопления и прогресс", icon: Target },
   { page: "budgets", title: "Бюджеты", text: "Лимиты по категориям", icon: Gauge },

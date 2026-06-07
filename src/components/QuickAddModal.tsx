@@ -1,6 +1,6 @@
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
-import type { Debt, SavingGoal, Subscription, Transaction } from "../types";
+import type { Account, Debt, SavingGoal, Subscription, Transaction } from "../types";
 import { todayISO } from "../utils/format";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "./FormControls";
 
@@ -22,6 +22,7 @@ export const QuickAddModal = ({
   onAddSubscription,
   onAddDebt,
   onAddGoal,
+  accounts,
 }: {
   open: boolean;
   onClose: () => void;
@@ -29,6 +30,7 @@ export const QuickAddModal = ({
   onAddSubscription: (subscription: Omit<Subscription, "id">) => void;
   onAddDebt: (debt: Omit<Debt, "id">) => void;
   onAddGoal: (goal: Omit<SavingGoal, "id">) => void;
+  accounts: Account[];
 }) => {
   const [mode, setMode] = useState<Mode>("expense");
   const [form, setForm] = useState({
@@ -37,6 +39,7 @@ export const QuickAddModal = ({
     category: "еда",
     date: todayISO(),
     comment: "",
+    accountId: accounts[0]?.id ?? "",
   });
 
   if (!open) return null;
@@ -46,7 +49,7 @@ export const QuickAddModal = ({
     const amount = Number(form.amount);
     if (amount <= 0) return;
     if (mode === "expense" || mode === "income") {
-      onAddTransaction({ type: mode, amount, category: form.category, date: form.date, comment: form.comment || form.title || undefined });
+      onAddTransaction({ type: mode, amount, category: form.category, date: form.date, comment: form.comment || form.title || undefined, accountId: form.accountId || accounts[0]?.id });
     }
     if (mode === "subscription") {
       onAddSubscription({ name: form.title || form.category, amount, period: "monthly", nextPaymentDate: form.date, category: form.category, isActive: true });
@@ -57,7 +60,7 @@ export const QuickAddModal = ({
     if (mode === "goal") {
       onAddGoal({ title: form.title || "Новая цель", targetAmount: amount, currentAmount: 0, deadline: form.date });
     }
-    setForm({ title: "", amount: "", category: "еда", date: todayISO(), comment: "" });
+    setForm({ title: "", amount: "", category: "еда", date: todayISO(), comment: "", accountId: accounts[0]?.id ?? "" });
     onClose();
   };
 
@@ -94,6 +97,7 @@ export const QuickAddModal = ({
           {mode !== "expense" && mode !== "income" ? <Field label={mode === "debt" ? "Кому" : "Название"}><input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></Field> : null}
           <Field label="Сумма"><input className={inputClass} type="number" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required /></Field>
           {(mode === "expense" || mode === "income" || mode === "subscription") ? <Field label="Категория"><input className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></Field> : null}
+          {(mode === "expense" || mode === "income") ? <Field label="Счёт"><select className={inputClass} value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })}>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></Field> : null}
           <Field label={mode === "goal" || mode === "debt" ? "Дедлайн" : "Дата"}><input className={inputClass} type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           {(mode === "expense" || mode === "income") ? <Field label="Комментарий"><input className={inputClass} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} /></Field> : null}
           <button className={`${buttonClass} w-full`} type="submit"><Plus size={18} />Добавить</button>

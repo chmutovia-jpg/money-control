@@ -10,13 +10,15 @@ interface AuthPageProps {
   error: string;
   onLogin: (data: { email: string; password: string }) => boolean;
   onRegister: (data: { name: string; email: string; password: string }) => boolean;
+  onLoginWithPin: (pin: string) => boolean;
   onDemoLogin: () => void;
   onClearError: () => void;
 }
 
-export const AuthPage = ({ theme, error, onLogin, onRegister, onDemoLogin, onClearError }: AuthPageProps) => {
+export const AuthPage = ({ theme, error, onLogin, onRegister, onLoginWithPin, onDemoLogin, onClearError }: AuthPageProps) => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [pin, setPin] = useState("");
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -41,6 +43,7 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onDemoLogin, onCle
           </div>
           <h1 className="text-3xl font-bold">Money Control</h1>
           <p className="mt-2 text-sm text-muted">Войди или создай аккаунт, чтобы сохранить свой личный кабинет.</p>
+          <p className="mt-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-muted">Данные хранятся только в этом браузере. Это локальный профиль, не облачный аккаунт.</p>
         </div>
 
         <Card>
@@ -78,6 +81,13 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onDemoLogin, onCle
               {mode === "login" ? <LogIn size={18} /> : <UserPlus size={18} />}
               {mode === "login" ? "Войти" : "Создать аккаунт"}
             </button>
+          </form>
+        </Card>
+
+        <Card className="mt-4">
+          <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); onLoginWithPin(pin); }}>
+            <input className={inputClass} inputMode="numeric" placeholder="PIN-код" value={pin} onChange={(e) => setPin(e.target.value)} />
+            <button className={ghostButtonClass} type="submit">PIN</button>
           </form>
         </Card>
 

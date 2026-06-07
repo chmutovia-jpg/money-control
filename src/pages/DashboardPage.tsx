@@ -4,7 +4,7 @@ import { Card, EmptyState, SectionHeader } from "../components/Card";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
 import type { FinanceState } from "../types";
-import { currentMonth, getActiveDebtTotal, getBalance, getBudgetProgress, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getTotalByType } from "../utils/calculations";
+import { currentMonth, getAccountsWithBalance, getActiveDebtTotal, getBudgetProgress, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getPaymentCalendar, getTotalAccountBalance, getTotalByType } from "../utils/calculations";
 import { formatCurrency, formatDate } from "../utils/format";
 
 const colors = ["#60a5fa", "#34d399", "#fb7185", "#a5b4fc", "#2dd4bf", "#fbbf24", "#94a3b8"];
@@ -13,12 +13,14 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
   const month = currentMonth();
   const income = getTotalByType(state.transactions, "income", month);
   const expenses = getTotalByType(state.transactions, "expense", month);
-  const balance = getBalance(state.transactions);
+  const balance = getTotalAccountBalance(state);
   const subscriptions = getMonthlySubscriptionsTotal(state.subscriptions);
   const debts = getActiveDebtTotal(state.debts);
   const goals = getGoalsProgress(state.goals);
   const daily = getDailySpendLimit(state);
   const forecast = getEndOfMonthForecast(state);
+  const accountBalances = getAccountsWithBalance(state.accounts, state.transactions);
+  const nearestPayments = getPaymentCalendar(state, 30).slice(0, 3);
   const budgets = getBudgetProgress(state.budgets, state.transactions, month);
   const problemBudget = budgets.find((budget) => budget.status === "over");
   const warningBudget = budgets.find((budget) => budget.status === "warning");
@@ -71,6 +73,28 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
         <StatCard label="Мои долги" value={formatCurrency(debts)} icon={CreditCard} tone="red" />
         <StatCard label="Цели накоплений" value={`${goals.percent}%`} icon={Target} tone="blue" hint={`${formatCurrency(goals.current)} из ${formatCurrency(goals.target)}`} />
         <StatCard label="Можно тратить в день" value={formatCurrency(Math.floor(daily.dailyLimit))} icon={PiggyBank} tone={daily.isNegative ? "red" : "green"} hint={daily.isNegative ? "Свободные деньги ушли в минус" : `На ${daily.daysLeft} дн. до конца месяца`} />
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card>
+          <SectionHeader title="Прогноз денег" />
+          <p className="text-3xl font-bold text-ink">{formatCurrency(Math.floor(forecast.forecast))}</p>
+          <p className="mt-2 text-sm text-muted">Если продолжишь тратить в таком темпе, в конце месяца останется {formatCurrency(Math.floor(forecast.forecast))}.</p>
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Сегодня</p><p className="font-bold">{formatCurrency(balance)}</p></div>
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Через 7 дней</p><p className="font-bold">{formatCurrency(Math.floor(balance - forecast.averageDailyExpense * 7))}</p></div>
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Конец месяца</p><p className="font-bold">{formatCurrency(Math.floor(forecast.forecast))}</p></div>
+          </div>
+          <div className="mt-5 space-y-2">
+            {nearestPayments.map((payment) => <div key={payment.id} className="flex justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm"><span>{payment.title}</span><strong>{formatCurrency(payment.amount)}</strong></div>)}
+          </div>
+        </Card>
+        <Card>
+          <SectionHeader title="Баланс по счетам" />
+          <div className="space-y-3">
+            {accountBalances.map((account) => <div key={account.id} className="flex items-center justify-between rounded-3xl bg-slate-50 p-4"><div><p className="font-semibold">{account.name}</p><p className="text-sm text-muted">{account.type}</p></div><p className="font-bold">{formatCurrency(account.currentBalance)}</p></div>)}
+          </div>
+        </Card>
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">

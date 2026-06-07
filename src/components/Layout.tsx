@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, CreditCard, Gauge, Home, LogOut, PiggyBank, Plus, Receipt, Repeat, Target, TrendingUp, UserCircle } from "lucide-react";
+import { BarChart3, CalendarDays, CreditCard, Gauge, Home, LogOut, PiggyBank, Plus, Receipt, Repeat, Target, TrendingUp, UserCircle, WalletCards } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { PageKey } from "../App";
 import type { AppTheme } from "../hooks/useTheme";
@@ -6,6 +6,7 @@ import type { User } from "../types";
 
 const navItems: Array<{ key: PageKey; label: string; icon: LucideIcon }> = [
   { key: "dashboard", label: "Главная", icon: Home },
+  { key: "accounts", label: "Счета", icon: WalletCards },
   { key: "income", label: "Доходы", icon: TrendingUp },
   { key: "expenses", label: "Расходы", icon: Receipt },
   { key: "subscriptions", label: "Подписки", icon: Repeat },

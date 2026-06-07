@@ -1,4 +1,4 @@
-import type { CategoryBudget, Debt, FinanceState, SavingGoal, Subscription, Transaction } from "../types";
+import type { Account, CategoryBudget, Debt, FinanceState, SavingGoal, Subscription, Transaction } from "../types";
 import { daysBetween, monthKey, todayISO } from "./format";
 
 export const currentMonth = () => todayISO().slice(0, 7);
@@ -26,6 +26,19 @@ export const getExpensesByCategory = (transactions: Transaction[], month?: strin
 
 export const getBalance = (transactions: Transaction[]) =>
   getTotalByType(transactions, "income") - getTotalByType(transactions, "expense");
+
+export const getAccountsWithBalance = (accounts: Account[], transactions: Transaction[]) =>
+  accounts.map((account) => {
+    const movement = sum(
+      transactions
+        .filter((item) => item.accountId === account.id)
+        .map((item) => (item.type === "income" ? item.amount : -item.amount)),
+    );
+    return { ...account, currentBalance: account.balance + movement };
+  });
+
+export const getTotalAccountBalance = (state: FinanceState) =>
+  sum(getAccountsWithBalance(state.accounts, state.transactions).map((account) => account.currentBalance));
 
 export const getMonthlySubscriptionsTotal = (subscriptions: Subscription[]) =>
   sum(subscriptions.map(monthlySubscriptionAmount));
@@ -70,7 +83,7 @@ export const getDailySpendLimit = (state: FinanceState) => {
 
 export const getEndOfMonthForecast = (state: FinanceState) => {
   const month = currentMonth();
-  const balance = getBalance(state.transactions);
+  const balance = getTotalAccountBalance(state);
   const expectedIncome = sum(
     state.transactions
       .filter((item) => item.type === "income" && item.isRecurring)

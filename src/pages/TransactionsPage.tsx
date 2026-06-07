@@ -2,7 +2,7 @@ import { Edit3, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Card, EmptyState, SectionHeader } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
-import type { Transaction } from "../types";
+import type { Account, Transaction } from "../types";
 import { formatCurrency, formatDate, todayISO } from "../utils/format";
 
 const incomeCategories = ["зарплата", "фриланс", "подарок", "другое"];
@@ -15,6 +15,7 @@ const emptyForm = (type: Transaction["type"]) => ({
   date: todayISO(),
   comment: "",
   isRecurring: false,
+  accountId: "",
 });
 
 interface Props {
@@ -23,9 +24,10 @@ interface Props {
   onAdd: (transaction: Omit<Transaction, "id">) => void;
   onUpdate: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
+  accounts: Account[];
 }
 
-export const TransactionsPage = ({ type, transactions, onAdd, onUpdate, onDelete }: Props) => {
+export const TransactionsPage = ({ type, transactions, onAdd, onUpdate, onDelete, accounts }: Props) => {
   const [form, setForm] = useState(emptyForm(type));
   const [editingId, setEditingId] = useState<string | null>(null);
   const isIncome = type === "income";
@@ -47,6 +49,7 @@ export const TransactionsPage = ({ type, transactions, onAdd, onUpdate, onDelete
       date: form.date,
       comment: form.comment.trim() || undefined,
       isRecurring: form.isRecurring,
+      accountId: form.accountId || accounts[0]?.id,
     };
     if (!payload.amount || payload.amount < 0) return;
     if (editingId) onUpdate({ ...payload, id: editingId });
@@ -63,6 +66,7 @@ export const TransactionsPage = ({ type, transactions, onAdd, onUpdate, onDelete
       date: transaction.date,
       comment: transaction.comment ?? "",
       isRecurring: Boolean(transaction.isRecurring),
+      accountId: transaction.accountId ?? accounts[0]?.id ?? "",
     });
   };
 
@@ -86,6 +90,12 @@ export const TransactionsPage = ({ type, transactions, onAdd, onUpdate, onDelete
             </Field>
             <Field label="Дата">
               <input className={inputClass} type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+            </Field>
+            <Field label="Счёт">
+              <select className={inputClass} value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })}>
+                <option value="">Основной</option>
+                {accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
+              </select>
             </Field>
             <Field label="Комментарий">
               <textarea className={`${inputClass} min-h-24 resize-none`} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} placeholder="Необязательно" />

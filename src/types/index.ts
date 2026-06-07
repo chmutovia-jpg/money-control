@@ -8,6 +8,7 @@ export interface Transaction {
   date: string;
   comment?: string;
   isRecurring?: boolean;
+  accountId?: string;
 }
 
 export interface Subscription {
@@ -18,6 +19,7 @@ export interface Subscription {
   nextPaymentDate: string;
   category: string;
   isActive: boolean;
+  usageStatus?: "using" | "rarely" | "can_cancel";
 }
 
 export interface Debt {
@@ -44,12 +46,21 @@ export interface CategoryBudget {
   monthlyLimit: number;
 }
 
+export interface Account {
+  id: string;
+  name: string;
+  type: "card" | "cash" | "savings" | "credit" | "other";
+  balance: number;
+  currency: "RUB";
+}
+
 export interface FinanceState {
   transactions: Transaction[];
   subscriptions: Subscription[];
   debts: Debt[];
   goals: SavingGoal[];
   budgets: CategoryBudget[];
+  accounts: Account[];
 }
 
 export interface User {
@@ -59,4 +70,6 @@ export interface User {
   password: string;
   avatar?: string;
   createdAt: string;
+  onboardingCompleted?: boolean;
+  pin?: string;
 }

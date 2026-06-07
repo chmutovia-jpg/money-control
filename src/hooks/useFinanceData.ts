@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { CategoryBudget, Debt, FinanceState, SavingGoal, Subscription, Transaction } from "../types";
+import type { Account, CategoryBudget, Debt, FinanceState, SavingGoal, Subscription, Transaction } from "../types";
 import { demoData } from "../utils/demoData";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "../utils/storage";
 
@@ -11,14 +11,16 @@ const getStorageKey = (userId: string | null) =>
 const createId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-const emptyState: FinanceState = { transactions: [], subscriptions: [], debts: [], goals: [], budgets: [] };
+const defaultAccount: Account = { id: "default-account", name: "Основной счёт", type: "card", balance: 0, currency: "RUB" };
+const emptyState: FinanceState = { transactions: [], subscriptions: [], debts: [], goals: [], budgets: [], accounts: [defaultAccount] };
 
 const normalizeState = (state: Partial<FinanceState>): FinanceState => ({
-  transactions: state.transactions ?? [],
-  subscriptions: state.subscriptions ?? [],
+  transactions: (state.transactions ?? []).map((item) => ({ ...item, accountId: item.accountId ?? (state.accounts?.[0]?.id ?? defaultAccount.id) })),
+  subscriptions: (state.subscriptions ?? []).map((item) => ({ ...item, usageStatus: item.usageStatus ?? "using" })),
   debts: state.debts ?? [],
   goals: state.goals ?? [],
   budgets: state.budgets ?? [],
+  accounts: state.accounts?.length ? state.accounts : [defaultAccount],
 });
 
 const loadInitialState = (userId: string | null): FinanceState => {
@@ -35,8 +37,8 @@ const loadInitialState = (userId: string | null): FinanceState => {
         safeRemoveItem(LEGACY_STORAGE_KEY);
       }
     }
-    safeSetItem(storageKey, JSON.stringify(demoData));
-    return demoData;
+    safeSetItem(storageKey, JSON.stringify(emptyState));
+    return emptyState;
   }
 
   try {
@@ -135,6 +137,26 @@ export const useFinanceData = (userId: string | null) => {
           ...current,
           budgets: current.budgets.filter((item) => item.id !== id),
         })),
+      addAccount: (account: Omit<Account, "id" | "currency">) =>
+        setState((current) => ({
+          ...current,
+          accounts: [{ ...account, id: createId(), currency: "RUB" }, ...current.accounts],
+        })),
+      updateAccount: (account: Account) =>
+        setState((current) => ({
+          ...current,
+          accounts: current.accounts.map((item) => (item.id === account.id ? account : item)),
+        })),
+      deleteAccount: (id: string) =>
+        setState((current) => {
+          const nextAccounts = current.accounts.filter((item) => item.id !== id);
+          const fallback = nextAccounts[0]?.id ?? defaultAccount.id;
+          return {
+            ...current,
+            accounts: nextAccounts.length ? nextAccounts : [defaultAccount],
+            transactions: current.transactions.map((item) => (item.accountId === id ? { ...item, accountId: fallback } : item)),
+          };
+        }),
       replaceAll: (nextState: FinanceState) => setState(normalizeState(nextState)),
       resetAll: () => setState(emptyState),
       restoreDemo: () => setState(demoData),
