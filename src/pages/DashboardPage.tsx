@@ -4,7 +4,7 @@ import { Card, EmptyState, SectionHeader } from "../components/Card";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
 import type { FinanceState } from "../types";
-import { currentMonth, getActiveDebtTotal, getBalance, getBudgetProgress, getDailySpendLimit, getExpensesByCategory, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getTotalByType } from "../utils/calculations";
+import { currentMonth, getActiveDebtTotal, getBalance, getBudgetProgress, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getTotalByType } from "../utils/calculations";
 import { formatCurrency, formatDate } from "../utils/format";
 
 const colors = ["#60a5fa", "#34d399", "#fb7185", "#a5b4fc", "#2dd4bf", "#fbbf24", "#94a3b8"];
@@ -18,7 +18,11 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
   const debts = getActiveDebtTotal(state.debts);
   const goals = getGoalsProgress(state.goals);
   const daily = getDailySpendLimit(state);
+  const forecast = getEndOfMonthForecast(state);
   const budgets = getBudgetProgress(state.budgets, state.transactions, month);
+  const problemBudget = budgets.find((budget) => budget.status === "over");
+  const warningBudget = budgets.find((budget) => budget.status === "warning");
+  const budgetStatus = problemBudget ? `Превышен лимит: ${problemBudget.category}` : warningBudget ? `Внимание: ${warningBudget.category} уже ${warningBudget.percent}%` : "Бюджет в норме";
   const insights = getInsights(state);
   const expensesByCategory = getExpensesByCategory(state.transactions, month);
   const latest = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
@@ -39,11 +43,30 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
         </div>
       </div>
 
+      <section className={`glass-panel mb-5 rounded-[28px] p-6 shadow-soft ${daily.isNegative ? "border-rose-300/30" : ""}`}>
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-muted">Сегодня можно потратить</p>
+            <p className={`mt-3 text-5xl font-bold leading-none sm:text-6xl ${daily.isNegative ? "text-rose-300" : "text-ink"}`}>
+              {formatCurrency(Math.floor(daily.dailyLimit))}
+            </p>
+            <p className={`mt-4 inline-flex rounded-full px-4 py-2 text-sm font-semibold ${problemBudget ? "bg-rose-400/10 text-rose-200" : warningBudget ? "bg-amber-400/10 text-amber-100" : "bg-emerald-400/10 text-emerald-200"}`}>
+              {daily.isNegative ? "Лимит ушёл в минус" : budgetStatus}
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">Баланс</p><p className="mt-1 font-bold text-ink">{formatCurrency(balance)}</p></div>
+            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">До конца</p><p className="mt-1 font-bold text-ink">{daily.daysLeft} дн.</p></div>
+            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">Свободно</p><p className="mt-1 font-bold text-ink">{formatCurrency(daily.freeMoney)}</p></div>
+          </div>
+        </div>
+      </section>
+
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Общий баланс" value={formatCurrency(balance)} icon={Wallet} tone="blue" />
         <StatCard label="Доходы за месяц" value={formatCurrency(income)} icon={TrendingUp} tone="green" />
         <StatCard label="Расходы за месяц" value={formatCurrency(expenses)} icon={TrendingDown} tone="red" />
-        <StatCard label="До конца месяца" value={`${daysLeft} дн.`} icon={BarChart3} tone="slate" hint={`Остаток после расходов: ${formatCurrency(income - expenses)}`} />
+        <StatCard label="Прогноз на конец месяца" value={formatCurrency(Math.floor(forecast.forecast))} icon={BarChart3} tone={forecast.forecast < 0 ? "red" : "blue"} hint={`Платежи: ${formatCurrency(forecast.futurePayments)}`} />
         <StatCard label="Подписки / месяц" value={formatCurrency(subscriptions)} icon={Repeat} tone="violet" />
         <StatCard label="Мои долги" value={formatCurrency(debts)} icon={CreditCard} tone="red" />
         <StatCard label="Цели накоплений" value={`${goals.percent}%`} icon={Target} tone="blue" hint={`${formatCurrency(goals.current)} из ${formatCurrency(goals.target)}`} />

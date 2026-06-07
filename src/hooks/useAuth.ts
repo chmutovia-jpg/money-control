@@ -113,6 +113,20 @@ export const useAuth = () => {
         setError("");
         setCurrentUserId(null);
       },
+      demoLogin: () => {
+        const demoUser: User = {
+          id: "demo-user",
+          name: "Демо пользователь",
+          email: "demo@money-control.local",
+          password: "demo123",
+          createdAt: new Date().toISOString(),
+        };
+        const nextUsers = [demoUser, ...users.filter((user) => user.id !== demoUser.id)];
+        saveUsers(nextUsers);
+        setUsers(nextUsers);
+        setCurrentUserId(demoUser.id);
+        setError("");
+      },
       updateProfile: (profile: Pick<User, "name" | "avatar">) => {
         if (!currentUserId) return;
         setError("");

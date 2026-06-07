@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, CreditCard, Gauge, Home, LogOut, PiggyBank, Receipt, Repeat, Target, TrendingUp, UserCircle } from "lucide-react";
+import { BarChart3, CalendarDays, CreditCard, Gauge, Home, LogOut, PiggyBank, Plus, Receipt, Repeat, Target, TrendingUp, UserCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { PageKey } from "../App";
 import type { AppTheme } from "../hooks/useTheme";
@@ -16,11 +16,20 @@ const navItems: Array<{ key: PageKey; label: string; icon: LucideIcon }> = [
   { key: "analytics", label: "Аналитика", icon: BarChart3 },
 ];
 
+const mobileNavItems: Array<{ key: PageKey; label: string; icon: LucideIcon }> = [
+  { key: "dashboard", label: "Главная", icon: Home },
+  { key: "operations", label: "Операции", icon: Receipt },
+  { key: "plan", label: "План", icon: Target },
+  { key: "analytics", label: "Аналитика", icon: BarChart3 },
+  { key: "profile", label: "Профиль", icon: UserCircle },
+];
+
 export const Layout = ({
   activePage,
   setActivePage,
   user,
   onLogout,
+  onQuickAdd,
   theme,
   children,
 }: {
@@ -28,27 +37,28 @@ export const Layout = ({
   setActivePage: (page: PageKey) => void;
   user: User;
   onLogout: () => void;
+  onQuickAdd: () => void;
   theme: AppTheme;
   children: React.ReactNode;
 }) => (
   <div className="app-shell min-h-screen bg-surface text-ink" data-theme={theme}>
-    <aside className="glass-sidebar fixed left-0 top-0 hidden h-screen w-72 flex-col p-6 shadow-soft backdrop-blur-2xl lg:flex">
+    <aside className="glass-sidebar fixed left-0 top-0 hidden h-screen w-64 flex-col p-4 shadow-soft backdrop-blur-2xl lg:flex">
       <div className="flex shrink-0 items-center gap-3">
         <div className="brand-orb flex h-12 w-12 items-center justify-center rounded-3xl text-white">
           <PiggyBank size={25} />
         </div>
         <div>
-          <p className="text-xl font-bold">Money Control</p>
-          <p className="text-sm text-muted">Личные финансы</p>
+          <p className="text-lg font-bold">Money Control</p>
+          <p className="text-xs text-muted">Личные финансы</p>
         </div>
       </div>
-      <nav className="mt-9 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+      <nav className="mt-6 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
         {navItems.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => setActivePage(item.key)}
-            className={`flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-left text-sm font-semibold transition ${
+            className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition ${
               activePage === item.key ? "bg-white/90 text-slate-950 shadow-card" : "text-slate-300 hover:bg-white/10"
             }`}
           >
@@ -57,7 +67,7 @@ export const Layout = ({
           </button>
         ))}
       </nav>
-      <div className="mt-5 shrink-0">
+      <div className="mt-4 shrink-0">
         <button
           type="button"
           onClick={() => setActivePage("profile")}
@@ -78,7 +88,7 @@ export const Layout = ({
       </div>
     </aside>
 
-    <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 sm:px-6 lg:ml-72 lg:px-8 lg:pb-10">
+    <main className="mx-auto max-w-7xl px-4 pb-32 pt-5 sm:px-6 lg:ml-64 lg:px-8 lg:pb-10">
       <div className="glass-panel mb-6 flex items-center justify-between rounded-5xl p-4 shadow-card lg:hidden">
         <div className="flex items-center gap-3">
           <div className="brand-orb flex h-11 w-11 items-center justify-center rounded-3xl text-white">
@@ -96,14 +106,23 @@ export const Layout = ({
       {children}
     </main>
 
+    <button
+      type="button"
+      onClick={onQuickAdd}
+      className="fixed bottom-24 right-4 z-30 inline-flex items-center justify-center gap-2 rounded-full bg-blue-500 px-5 py-4 text-sm font-bold text-white shadow-soft transition hover:bg-blue-400 lg:bottom-6 lg:right-8"
+    >
+      <Plus size={20} />
+      Добавить
+    </button>
+
     <nav className="glass-bottom-nav fixed bottom-0 left-0 right-0 z-20 px-2 py-2 shadow-soft backdrop-blur-2xl lg:hidden">
-      <div className="flex gap-1 overflow-x-auto pb-1">
-        {navItems.map((item) => (
+      <div className="grid grid-cols-5 gap-1">
+        {mobileNavItems.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => setActivePage(item.key)}
-            className={`flex min-h-14 min-w-20 flex-col items-center justify-center rounded-2xl px-2 text-[10px] font-semibold transition ${
+            className={`flex min-h-14 flex-col items-center justify-center rounded-2xl px-1 text-[10px] font-semibold transition ${
               activePage === item.key ? "bg-white/90 text-slate-950" : "text-slate-300 hover:bg-white/10"
             }`}
           >

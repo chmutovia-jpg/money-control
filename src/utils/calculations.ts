@@ -68,6 +68,32 @@ export const getDailySpendLimit = (state: FinanceState) => {
   };
 };
 
+export const getEndOfMonthForecast = (state: FinanceState) => {
+  const month = currentMonth();
+  const balance = getBalance(state.transactions);
+  const expectedIncome = sum(
+    state.transactions
+      .filter((item) => item.type === "income" && item.isRecurring)
+      .map((item) => item.amount),
+  );
+  const futurePayments = sum(getPaymentCalendar(state, getDaysLeftInMonth()).map((event) => event.amount));
+  const expenseDays = new Set(
+    state.transactions
+      .filter((item) => item.type === "expense" && monthKey(item.date) === month)
+      .map((item) => item.date),
+  ).size;
+  const monthlyExpenses = getTotalByType(state.transactions, "expense", month);
+  const averageDailyExpense = expenseDays ? monthlyExpenses / expenseDays : 0;
+  const forecast = balance + expectedIncome - futurePayments - averageDailyExpense * getDaysLeftInMonth();
+
+  return {
+    forecast,
+    expectedIncome,
+    futurePayments,
+    averageDailyExpense,
+  };
+};
+
 export const getBudgetProgress = (budgets: CategoryBudget[], transactions: Transaction[], month = currentMonth()) =>
   budgets
     .map((budget) => {

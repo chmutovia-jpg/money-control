@@ -169,12 +169,12 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
     <div>
       <div className="mb-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-muted">Личный кабинет</p>
-        <h1 className="mt-1 text-3xl font-bold text-ink">Профиль</h1>
+        <h1 className="mt-1 text-3xl font-bold text-ink">Настройки</h1>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[420px_1fr]">
         <Card>
-          <SectionHeader title="Аккаунт" />
+          <SectionHeader title="Профиль" />
           <form className="space-y-5" onSubmit={submit}>
             <div className="flex flex-col items-center rounded-5xl border border-white/10 bg-white/5 p-6 text-center">
               <div className="relative">
@@ -213,7 +213,7 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
         </Card>
 
         <Card>
-          <SectionHeader title="Тема интерфейса" />
+          <SectionHeader title="Внешний вид" />
           <div className="grid grid-cols-2 gap-2 rounded-3xl bg-slate-50 p-1">
             <button
               type="button"
@@ -235,8 +235,9 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
         </Card>
 
         <Card>
-          <SectionHeader title="Что сохраняется" />
+          <SectionHeader title="Данные" />
           <div className="space-y-3 text-sm text-muted">
+            <div className="rounded-3xl bg-slate-50 p-4 font-semibold text-ink">Данные хранятся локально в этом браузере.</div>
             <div className="rounded-3xl bg-slate-50 p-4">Доходы, расходы, подписки, долги и цели привязаны к текущему аккаунту.</div>
             <div className="rounded-3xl bg-slate-50 p-4">Аватарка и имя хранятся локально в браузере через localStorage.</div>
             <div className="rounded-3xl bg-slate-50 p-4">Backend и внешняя отправка данных не используются.</div>
@@ -265,6 +266,15 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
           </div>
           <input ref={importInputRef} className="sr-only" type="file" accept="application/json,.json" onChange={(e) => importJson(e.target.files?.[0])} />
           {importStatus ? <div className="mt-4 rounded-2xl border border-white/10 bg-slate-50 px-4 py-3 text-sm font-medium text-ink">{importStatus}</div> : null}
+        </Card>
+
+        <Card>
+          <SectionHeader title="Безопасность" />
+          <p className="text-sm text-muted">Пароль и сессия хранятся локально. Для личного ежедневного использования этого достаточно, но для синхронизации между устройствами понадобится backend.</p>
+          <button className={`${ghostButtonClass} mt-4`} type="button" onClick={onLogout}>
+            <LogOut size={18} />
+            Выйти из аккаунта
+          </button>
         </Card>
       </div>
     </div>

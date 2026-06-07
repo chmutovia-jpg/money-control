@@ -10,10 +10,11 @@ interface AuthPageProps {
   error: string;
   onLogin: (data: { email: string; password: string }) => boolean;
   onRegister: (data: { name: string; email: string; password: string }) => boolean;
+  onDemoLogin: () => void;
   onClearError: () => void;
 }
 
-export const AuthPage = ({ theme, error, onLogin, onRegister, onClearError }: AuthPageProps) => {
+export const AuthPage = ({ theme, error, onLogin, onRegister, onDemoLogin, onClearError }: AuthPageProps) => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
@@ -87,6 +88,9 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onClearError }: Au
         >
           <Lock size={17} />
           {mode === "login" ? "У меня ещё нет аккаунта" : "У меня уже есть аккаунт"}
+        </button>
+        <button className={`${buttonClass} mt-3 w-full`} type="button" onClick={onDemoLogin}>
+          Попробовать демо
         </button>
         <button
           className="mt-3 w-full rounded-2xl px-4 py-3 text-sm font-semibold text-muted transition hover:bg-white/10"
