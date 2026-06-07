@@ -36,7 +36,7 @@ const App = () => {
     budgets: <BudgetsPage budgets={finance.state.budgets} transactions={finance.state.transactions} onAdd={finance.addBudget} onUpdate={finance.updateBudget} onDelete={finance.deleteBudget} />,
     calendar: <CalendarPage state={finance.state} />,
     analytics: <AnalyticsPage state={finance.state} />,
-    profile: <ProfilePage user={auth.currentUser} financeState={finance.state} theme={theme.theme} onThemeChange={theme.setTheme} onImportData={finance.replaceAll} onUpdateProfile={auth.updateProfile} onLogout={auth.logout} />,
+    profile: <ProfilePage user={auth.currentUser} financeState={finance.state} theme={theme.theme} authError={auth.error} onThemeChange={theme.setTheme} onImportData={finance.replaceAll} onUpdateProfile={auth.updateProfile} onLogout={auth.logout} />,
   }[activePage];
 
   return <Layout activePage={activePage} setActivePage={setActivePage} user={auth.currentUser} onLogout={auth.logout} theme={theme.theme}>{page}</Layout>;

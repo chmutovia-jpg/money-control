@@ -8,22 +8,37 @@ const createId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
+const MAX_AVATAR_LENGTH = 80_000;
+
+const normalizeUser = (user: User): User => ({
+  ...user,
+  avatar: user.avatar && user.avatar.length <= MAX_AVATAR_LENGTH ? user.avatar : undefined,
+});
 
 const loadUsers = (): User[] => {
   try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) ?? "[]") as User[];
+    return (JSON.parse(localStorage.getItem(USERS_KEY) ?? "[]") as User[]).map(normalizeUser);
   } catch {
     localStorage.removeItem(USERS_KEY);
     return [];
   }
 };
 
+const writeUsers = (users: User[]) => {
+  localStorage.removeItem(USERS_KEY);
+  localStorage.setItem(USERS_KEY, JSON.stringify(users.map(normalizeUser)));
+};
+
 const saveUsers = (users: User[]) => {
   try {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    writeUsers(users);
   } catch {
     const usersWithoutAvatars = users.map((user) => ({ ...user, avatar: undefined }));
-    localStorage.setItem(USERS_KEY, JSON.stringify(usersWithoutAvatars));
+    try {
+      writeUsers(usersWithoutAvatars);
+    } catch {
+      localStorage.removeItem(USERS_KEY);
+    }
   }
 };
 
@@ -39,8 +54,12 @@ export const useAuth = () => {
   }, [users]);
 
   useEffect(() => {
-    if (currentUserId) localStorage.setItem(SESSION_KEY, currentUserId);
-    else localStorage.removeItem(SESSION_KEY);
+    try {
+      if (currentUserId) localStorage.setItem(SESSION_KEY, currentUserId);
+      else localStorage.removeItem(SESSION_KEY);
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
+    }
   }, [currentUserId]);
 
   const api = useMemo(
@@ -98,10 +117,15 @@ export const useAuth = () => {
           user.id === currentUserId ? { ...user, name: profile.name.trim() || user.name, avatar: profile.avatar } : user,
         );
         try {
-          localStorage.setItem(USERS_KEY, JSON.stringify(nextUsers));
-          setUsers(nextUsers);
+          writeUsers(nextUsers);
+          setUsers(nextUsers.map(normalizeUser));
         } catch {
-          setError("Аватар слишком большой. Попробуй выбрать другое фото.");
+          const withoutAvatar = nextUsers.map((user) =>
+            user.id === currentUserId ? { ...user, avatar: undefined } : user,
+          );
+          saveUsers(withoutAvatar);
+          setUsers(withoutAvatar);
+          setError("Телефон не смог сохранить аватар. Фото убрано, остальные данные сохранены.");
         }
       },
       clearError: () => setError(""),

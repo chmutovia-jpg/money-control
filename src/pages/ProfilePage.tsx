@@ -10,6 +10,7 @@ interface ProfilePageProps {
   user: User;
   financeState: FinanceState;
   theme: AppTheme;
+  authError?: string;
   onThemeChange: (theme: AppTheme) => void;
   onImportData: (state: FinanceState) => void;
   onUpdateProfile: (profile: Pick<User, "name" | "avatar">) => void;
@@ -52,7 +53,7 @@ const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => (
   budgets: state.budgets ?? [],
 });
 
-export const ProfilePage = ({ user, financeState, theme, onThemeChange, onImportData, onUpdateProfile, onLogout }: ProfilePageProps) => {
+export const ProfilePage = ({ user, financeState, theme, authError, onThemeChange, onImportData, onUpdateProfile, onLogout }: ProfilePageProps) => {
   const [name, setName] = useState(user.name);
   const [avatar, setAvatar] = useState(user.avatar);
   const [saved, setSaved] = useState(false);
@@ -71,7 +72,7 @@ export const ProfilePage = ({ user, financeState, theme, onThemeChange, onImport
     const imageUrl = URL.createObjectURL(file);
     const image = new Image();
     image.onload = () => {
-      const size = 240;
+      const size = 128;
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
       if (!context) {
@@ -86,9 +87,34 @@ export const ProfilePage = ({ user, financeState, theme, onThemeChange, onImport
       canvas.width = size;
       canvas.height = size;
       context.drawImage(image, sourceX, sourceY, side, side, 0, 0, size, size);
-      setAvatar(canvas.toDataURL("image/webp", 0.78));
-      setAvatarStatus("Аватар готов. Нажми «Сохранить».");
-      URL.revokeObjectURL(imageUrl);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            setAvatarStatus("Не удалось сжать изображение.");
+            URL.revokeObjectURL(imageUrl);
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = String(reader.result);
+            if (result.length > 80_000) {
+              setAvatarStatus("Фото всё ещё слишком большое. Выбери другое изображение.");
+              URL.revokeObjectURL(imageUrl);
+              return;
+            }
+            setAvatar(result);
+            setAvatarStatus("Аватар готов. Нажми «Сохранить».");
+            URL.revokeObjectURL(imageUrl);
+          };
+          reader.onerror = () => {
+            setAvatarStatus("Не удалось прочитать сжатый аватар.");
+            URL.revokeObjectURL(imageUrl);
+          };
+          reader.readAsDataURL(blob);
+        },
+        "image/jpeg",
+        0.62,
+      );
     };
     image.onerror = () => {
       setAvatarStatus("Не удалось открыть изображение.");
@@ -169,6 +195,7 @@ export const ProfilePage = ({ user, financeState, theme, onThemeChange, onImport
             </Field>
 
             {saved ? <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm font-medium text-emerald-200">Профиль сохранён.</div> : null}
+            {authError ? <div className="rounded-2xl border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm font-medium text-rose-200">{authError}</div> : null}
             {avatarStatus ? <div className="rounded-2xl border border-blue-300/20 bg-blue-400/10 px-4 py-3 text-sm font-medium text-blue-100">{avatarStatus}</div> : null}
 
             <div className="flex flex-wrap gap-2">
