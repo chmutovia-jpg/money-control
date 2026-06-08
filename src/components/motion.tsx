@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatCurrency } from "../utils/format";
 
 export const PageTransition = ({ children }: { children: ReactNode }) => {
@@ -51,36 +51,36 @@ export const AnimatedNumber = ({
 }) => {
   const reduced = useReducedMotion();
   const [display, setDisplay] = useState(reduced ? value : 0);
+  const displayRef = useRef(display);
 
   useEffect(() => {
     if (reduced) {
       setDisplay(value);
+      displayRef.current = value;
       return;
     }
     let frame = 0;
     const frames = 28;
-    const from = display;
+    const from = displayRef.current;
     const diff = value - from;
     const animate = () => {
       frame += 1;
       const progress = 1 - Math.pow(1 - frame / frames, 3);
-      setDisplay(from + diff * progress);
+      const next = from + diff * progress;
+      displayRef.current = next;
+      setDisplay(next);
       if (frame < frames) requestAnimationFrame(animate);
     };
     const id = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(id);
-    // display intentionally omitted so number animates from current rendered value only on target changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduced, value]);
 
   const rounded = Math.round(display);
   const rendered = currency ? formatCurrency(rounded) : `${rounded}${suffix}`;
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.span key={rendered.includes("•••") ? "hidden" : rendered} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduced ? 0.08 : 0.18, ease: "easeOut" }}>
-        {rendered}
-      </motion.span>
-    </AnimatePresence>
+    <motion.span className="inline-block whitespace-nowrap tabular-nums" animate={{ opacity: 1 }} initial={{ opacity: 0.72 }} transition={{ duration: reduced ? 0.08 : 0.18, ease: "easeOut" }}>
+      {rendered}
+    </motion.span>
   );
 };
 

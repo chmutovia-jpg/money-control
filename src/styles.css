@@ -210,7 +210,7 @@ button:disabled {
 }
 
 .text-slate-950 {
-  color: #07111f !important;
+  color: var(--ink) !important;
 }
 
 .bg-emerald-50,
@@ -372,14 +372,9 @@ button:focus-visible {
 .app-shell[data-theme="minimal-paper"] .glass-panel,
 .app-shell[data-theme="minimal-paper"] .glass-sidebar,
 .app-shell[data-theme="minimal-paper"] .glass-bottom-nav {
-  border-color: rgba(15, 23, 42, 0.08);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.66)),
-    rgba(255, 255, 255, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.92),
-    0 0 0 1px rgba(59, 130, 246, 0.05),
-    0 18px 44px rgba(15, 23, 42, 0.12);
+  border-color: var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
 }
 
 .app-shell[data-theme="light"] .glass-panel::before,
@@ -508,6 +503,110 @@ button:focus-visible {
   border-color: rgba(15, 23, 42, 0.12) !important;
   background: rgba(255, 255, 255, 0.92) !important;
   color: #0f172a !important;
+}
+
+.app-shell[data-theme="midnight-finance"] .text-slate-950,
+.app-shell[data-theme="graphite-pro"] .text-slate-950,
+.app-shell[data-theme="aurora"] .text-slate-950 {
+  color: var(--ink) !important;
+}
+
+.app-shell[data-theme="midnight-finance"] .bg-white\/90,
+.app-shell[data-theme="graphite-pro"] .bg-white\/90,
+.app-shell[data-theme="aurora"] .bg-white\/90 {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.app-shell[data-theme="glass-light"] .bg-white\/90,
+.app-shell[data-theme="minimal-paper"] .bg-white\/90 {
+  background-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.app-shell[data-theme="glass-light"] .bg-white\/90.text-slate-950,
+.app-shell[data-theme="minimal-paper"] .bg-white\/90.text-slate-950 {
+  color: #0f172a !important;
+}
+
+.app-shell[data-theme="midnight-finance"] .text-white,
+.app-shell[data-theme="graphite-pro"] .text-white,
+.app-shell[data-theme="aurora"] .text-white {
+  color: #f8fafc !important;
+}
+
+.app-shell[data-theme="glass-light"] .text-blue-200,
+.app-shell[data-theme="glass-light"] .text-blue-300,
+.app-shell[data-theme="glass-light"] .text-sky-600,
+.app-shell[data-theme="minimal-paper"] .text-blue-200,
+.app-shell[data-theme="minimal-paper"] .text-blue-300,
+.app-shell[data-theme="minimal-paper"] .text-sky-600 {
+  color: #1d4ed8 !important;
+}
+
+.app-shell[data-theme="glass-light"] .text-emerald-200,
+.app-shell[data-theme="glass-light"] .text-emerald-100,
+.app-shell[data-theme="glass-light"] .text-emerald-300,
+.app-shell[data-theme="glass-light"] .text-emerald-600,
+.app-shell[data-theme="glass-light"] .text-emerald-700,
+.app-shell[data-theme="minimal-paper"] .text-emerald-100,
+.app-shell[data-theme="minimal-paper"] .text-emerald-200,
+.app-shell[data-theme="minimal-paper"] .text-emerald-300,
+.app-shell[data-theme="minimal-paper"] .text-emerald-600,
+.app-shell[data-theme="minimal-paper"] .text-emerald-700 {
+  color: #064e3b !important;
+}
+
+.app-shell[data-theme="glass-light"] .bg-emerald-400\/10,
+.app-shell[data-theme="minimal-paper"] .bg-emerald-400\/10 {
+  background-color: rgba(5, 150, 105, 0.14) !important;
+}
+
+.app-shell[data-theme="glass-light"] .border-emerald-300\/25,
+.app-shell[data-theme="minimal-paper"] .border-emerald-300\/25 {
+  border-color: rgba(5, 95, 70, 0.28) !important;
+}
+
+.app-shell[data-theme="glass-light"] .text-rose-200,
+.app-shell[data-theme="glass-light"] .text-rose-300,
+.app-shell[data-theme="glass-light"] .text-rose-500,
+.app-shell[data-theme="glass-light"] .text-rose-600,
+.app-shell[data-theme="glass-light"] .text-rose-700,
+.app-shell[data-theme="minimal-paper"] .text-rose-200,
+.app-shell[data-theme="minimal-paper"] .text-rose-300,
+.app-shell[data-theme="minimal-paper"] .text-rose-500,
+.app-shell[data-theme="minimal-paper"] .text-rose-600,
+.app-shell[data-theme="minimal-paper"] .text-rose-700 {
+  color: #be123c !important;
+}
+
+.app-shell[data-theme="glass-light"] .text-amber-100,
+.app-shell[data-theme="glass-light"] .text-amber-200,
+.app-shell[data-theme="minimal-paper"] .text-amber-100,
+.app-shell[data-theme="minimal-paper"] .text-amber-200 {
+  color: #92400e !important;
+}
+
+.app-shell[data-theme="midnight-finance"] .text-rose-600,
+.app-shell[data-theme="midnight-finance"] .text-rose-700,
+.app-shell[data-theme="graphite-pro"] .text-rose-600,
+.app-shell[data-theme="graphite-pro"] .text-rose-700,
+.app-shell[data-theme="aurora"] .text-rose-600,
+.app-shell[data-theme="aurora"] .text-rose-700 {
+  color: #fda4af !important;
+}
+
+.app-shell[data-theme="midnight-finance"] .text-emerald-600,
+.app-shell[data-theme="midnight-finance"] .text-emerald-700,
+.app-shell[data-theme="graphite-pro"] .text-emerald-600,
+.app-shell[data-theme="graphite-pro"] .text-emerald-700,
+.app-shell[data-theme="aurora"] .text-emerald-600,
+.app-shell[data-theme="aurora"] .text-emerald-700 {
+  color: #86efac !important;
+}
+
+.app-shell[data-theme="midnight-finance"] .text-sky-600,
+.app-shell[data-theme="graphite-pro"] .text-sky-600,
+.app-shell[data-theme="aurora"] .text-sky-600 {
+  color: #93c5fd !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
