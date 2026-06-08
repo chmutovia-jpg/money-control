@@ -5,6 +5,7 @@ import { filterDuplicateTransactions } from "./imports";
 import { todayISO } from "./format";
 
 const baseState = (transactions: Transaction[] = []): FinanceState => ({
+  schemaVersion: 2,
   accounts: [{ id: "a1", name: "Основной", type: "card", balance: 10000, currency: "RUB", color: "#60a5fa" }],
   transactions,
   subscriptions: [],

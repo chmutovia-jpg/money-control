@@ -5,15 +5,9 @@ import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/
 import type { FinanceState } from "../types";
 import { demoData } from "../utils/demoData";
 import { todayISO } from "../utils/format";
+import { emptyFinanceState, migrateFinanceState } from "../utils/migrations";
 
-const emptyState: FinanceState = {
-  accounts: [{ id: "main", name: "Основной", type: "card", balance: 0, currency: "RUB", color: "#60a5fa" }],
-  transactions: [],
-  subscriptions: [],
-  debts: [],
-  goals: [],
-  budgets: [],
-};
+const emptyState = emptyFinanceState();
 
 export const OnboardingPage = ({
   onFinish,
@@ -38,6 +32,7 @@ export const OnboardingPage = ({
   const submitQuick = (event: React.FormEvent) => {
     event.preventDefault();
     const state: FinanceState = {
+      schemaVersion: 2,
       accounts: [{ id: "main", name: "Основной", type: "card", balance: Number(form.balance) || 0, currency: "RUB", color: "#60a5fa" }],
       transactions: Number(form.income) > 0 ? [{ id: "income-start", type: "income", amount: Number(form.income), category: "зарплата", date: todayISO(), comment: "Месячный доход", isRecurring: true, accountId: "main" }] : [],
       subscriptions: Number(form.payments) > 0 ? [{ id: "required-start", name: "Обязательные платежи", amount: Number(form.payments), period: "monthly", nextPaymentDate: todayISO(), category: "обязательные", isActive: true, usageStatus: "using" }] : [],
@@ -49,7 +44,7 @@ export const OnboardingPage = ({
         { id: "budget-3", category: form.budget3Category, monthlyLimit: Number(form.budget3) || 0 },
       ].filter((budget) => budget.monthlyLimit > 0),
     };
-    onFinish(state);
+    onFinish(migrateFinanceState(state));
   };
 
   return (

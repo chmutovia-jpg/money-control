@@ -1,4 +1,4 @@
-import { Lock, LogIn, PiggyBank, UserPlus } from "lucide-react";
+import { Lock, LogIn, ShieldCheck, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Card } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
@@ -8,10 +8,10 @@ import { clearMoneyControlStorage } from "../utils/storage";
 interface AuthPageProps {
   theme: AppTheme;
   error: string;
-  onLogin: (data: { email: string; password: string }) => boolean;
-  onRegister: (data: { name: string; email: string; password: string }) => boolean;
-  onLoginWithPin: (pin: string) => boolean;
-  onDemoLogin: () => void;
+  onLogin: (data: { email: string; password: string }) => boolean | Promise<boolean>;
+  onRegister: (data: { name: string; email: string; password: string }) => boolean | Promise<boolean>;
+  onLoginWithPin: (pin: string) => boolean | Promise<boolean>;
+  onDemoLogin: () => void | Promise<void>;
   onClearError: () => void;
 }
 
@@ -20,12 +20,13 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onLoginWithPin, on
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [pin, setPin] = useState("");
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const ok =
+    const ok = await (
       mode === "login"
         ? onLogin({ email: form.email, password: form.password })
-        : onRegister({ name: form.name, email: form.email, password: form.password });
+        : onRegister({ name: form.name, email: form.email, password: form.password })
+    );
     if (ok) setForm({ name: "", email: "", password: "" });
   };
 
@@ -38,12 +39,11 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onLoginWithPin, on
     <div className="app-shell flex min-h-screen items-center justify-center px-4 py-10 text-ink" data-theme={theme}>
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="brand-orb mb-4 flex h-16 w-16 items-center justify-center rounded-5xl text-white">
-            <PiggyBank size={32} />
-          </div>
+          <img className="mb-4 h-20 w-20 rounded-[26px] shadow-[0_0_42px_rgba(96,165,250,0.25)]" src="./icon.svg" alt="Money Control" />
           <h1 className="text-3xl font-bold">Money Control</h1>
-          <p className="mt-2 text-sm text-muted">Войди или создай аккаунт, чтобы сохранить свой личный кабинет.</p>
-          <p className="mt-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-muted">Данные хранятся только в этом браузере. Это локальный профиль, не облачный аккаунт.</p>
+          <p className="mt-2 text-lg font-semibold text-ink">Твои деньги под контролем</p>
+          <p className="mt-2 text-sm text-muted">Локально. Приватно. Без банковских подключений.</p>
+          <p className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-muted"><ShieldCheck size={15} /> Это локальный профиль, данные не уходят на сервер.</p>
         </div>
 
         <Card>
@@ -79,7 +79,7 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onLoginWithPin, on
             {error ? <div className="rounded-2xl border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm font-medium text-rose-200">{error}</div> : null}
             <button className={`${buttonClass} w-full`} type="submit">
               {mode === "login" ? <LogIn size={18} /> : <UserPlus size={18} />}
-              {mode === "login" ? "Войти" : "Создать аккаунт"}
+              {mode === "login" ? "Войти" : "Создать локальный профиль"}
             </button>
           </form>
         </Card>
@@ -87,22 +87,30 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onLoginWithPin, on
         <Card className="mt-4">
           <p className="mb-3 text-sm font-semibold text-ink">Быстрый локальный вход по PIN</p>
           <p className="mb-3 text-xs text-muted">PIN работает только на этом устройстве и в этом браузере.</p>
-          <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); onLoginWithPin(pin); }}>
+          <form className="flex gap-2" onSubmit={async (e) => { e.preventDefault(); await onLoginWithPin(pin); }}>
             <input className={inputClass} inputMode="numeric" placeholder="PIN-код" value={pin} onChange={(e) => setPin(e.target.value)} />
             <button className={ghostButtonClass} type="submit">PIN</button>
           </form>
         </Card>
 
+        <button className={`${buttonClass} mt-4 w-full`} type="button" onClick={onDemoLogin}>
+          Попробовать демо
+        </button>
         <button
-          className={`${ghostButtonClass} mt-4 w-full`}
+          className={`${ghostButtonClass} mt-3 w-full`}
           type="button"
-          onClick={() => switchMode(mode === "login" ? "register" : "login")}
+          onClick={() => switchMode("register")}
+        >
+          <UserPlus size={17} />
+          Создать локальный профиль
+        </button>
+        <button
+          className={`${ghostButtonClass} mt-3 w-full`}
+          type="button"
+          onClick={() => switchMode("login")}
         >
           <Lock size={17} />
-          {mode === "login" ? "У меня ещё нет аккаунта" : "У меня уже есть аккаунт"}
-        </button>
-        <button className={`${buttonClass} mt-3 w-full`} type="button" onClick={onDemoLogin}>
-          Попробовать демо
+          Войти
         </button>
         <button
           className="mt-3 w-full rounded-2xl px-4 py-3 text-sm font-semibold text-muted transition hover:bg-white/10"

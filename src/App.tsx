@@ -10,6 +10,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useFinanceData } from "./hooks/useFinanceData";
 import { useTheme } from "./hooks/useTheme";
 import { areAmountsHidden, setAmountsHidden } from "./utils/format";
+import { verifySecret } from "./utils/crypto";
 import { getSmartAlerts } from "./utils/smartAlerts";
 import { safeGetItem, safeSetItem } from "./utils/storage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
@@ -50,11 +51,20 @@ const App = () => {
   }, [reduced]);
 
   useEffect(() => {
-    setLocked(Boolean(auth.currentUser?.pin));
-  }, [auth.currentUser?.id, auth.currentUser?.pin]);
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get("page") as PageKey | null;
+    if (page && ["dashboard", "operations", "plan", "accounts", "income", "expenses", "subscriptions", "debts", "goals", "budgets", "calendar", "analytics", "profile"].includes(page)) {
+      setActivePage(page);
+    }
+    if (params.get("quick") === "expense") setQuickAddOpen(true);
+  }, []);
 
   useEffect(() => {
-    if (!auth.currentUser?.pin || locked) return;
+    setLocked(Boolean(auth.currentUser?.pinHash || auth.currentUser?.pin));
+  }, [auth.currentUser?.id, auth.currentUser?.pinHash, auth.currentUser?.pin]);
+
+  useEffect(() => {
+    if (!(auth.currentUser?.pinHash || auth.currentUser?.pin) || locked) return;
     let timer = window.setTimeout(() => setLocked(true), 3 * 60_000);
     const resetTimer = () => {
       window.clearTimeout(timer);
@@ -69,7 +79,7 @@ const App = () => {
       window.removeEventListener("keydown", resetTimer);
       window.removeEventListener("touchstart", resetTimer);
     };
-  }, [auth.currentUser?.pin, locked]);
+  }, [auth.currentUser?.pinHash, auth.currentUser?.pin, locked]);
 
   const notify = (message: string, action?: ToastItem["action"]) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -115,7 +125,7 @@ const App = () => {
     );
   }
 
-  if (locked && auth.currentUser.pin) {
+  if (locked && (auth.currentUser.pinHash || auth.currentUser.pin)) {
     return (
       <div className="app-shell flex min-h-screen items-center justify-center px-4 text-ink" data-theme={theme.theme}>
         <motion.form
@@ -123,9 +133,12 @@ const App = () => {
           initial={reduced ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.97 }}
           animate={pinError && !reduced ? { x: [0, -8, 8, -5, 5, 0], opacity: 1, y: 0, scale: 1 } : { opacity: 1, y: 0, scale: 1, x: 0 }}
           transition={{ duration: pinError ? 0.34 : 0.28, ease: "easeOut" }}
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            if (pinInput === auth.currentUser?.pin) {
+            const pinOk = auth.currentUser?.pin
+              ? pinInput === auth.currentUser.pin
+              : await verifySecret(pinInput, auth.currentUser?.pinHash, auth.currentUser?.pinSalt);
+            if (pinOk) {
               setLocked(false);
               setPinInput("");
             } else {

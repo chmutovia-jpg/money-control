@@ -4,8 +4,10 @@ import { Card, SectionHeader } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
 import { themeOptions, type AppTheme } from "../hooks/useTheme";
 import type { FinanceState, Transaction, User } from "../types";
+import { decryptJsonWithPassword, encryptJsonWithPassword } from "../utils/crypto";
 import { MONEY_HIDDEN_KEY, formatDate } from "../utils/format";
 import { filterDuplicateTransactions, findDuplicateTransactions } from "../utils/imports";
+import { migrateFinanceState } from "../utils/migrations";
 import { safeGetItem, safeSetItem } from "../utils/storage";
 
 interface ProfilePageProps {
@@ -16,7 +18,7 @@ interface ProfilePageProps {
   onThemeChange: (theme: AppTheme) => void;
   onImportData: (state: FinanceState) => void;
   onUpdateProfile: (profile: Pick<User, "name" | "avatar">) => void;
-  onSetPin: (pin: string) => void;
+  onSetPin: (pin: string) => void | Promise<void>;
   onLogout: () => void;
 }
 
@@ -34,6 +36,11 @@ const csvValue = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""
 const QUICK_TEMPLATES_KEY = "money-control-quick-templates";
 
 type ImportableState = Partial<FinanceState> & {
+  moneyControlProtected?: boolean;
+  salt?: string;
+  iv?: string;
+  data?: string;
+  iterations?: number;
   customQuickAddTemplates?: unknown;
   privacy?: {
     hideAmounts?: boolean;
@@ -87,24 +94,7 @@ const csvToTransactions = (content: string): Transaction[] => {
   }).filter((item) => item.date && item.amount > 0);
 };
 
-const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => {
-  const accounts = state.accounts?.length
-    ? state.accounts.map((account, index) => ({
-        ...account,
-        currency: "RUB" as const,
-        color: account.color ?? ["#60a5fa", "#34d399", "#a78bfa", "#fb7185"][index % 4],
-      }))
-    : [{ id: "main", name: "Основной счёт", type: "card" as const, balance: 0, currency: "RUB" as const, color: "#60a5fa" }];
-  const fallbackAccountId = accounts[0].id;
-  return {
-  transactions: (state.transactions ?? []).map((item) => ({ ...item, accountId: item.accountId ?? fallbackAccountId })),
-  subscriptions: state.subscriptions ?? [],
-  debts: state.debts ?? [],
-  goals: state.goals ?? [],
-  budgets: state.budgets ?? [],
-  accounts,
-  };
-};
+const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => migrateFinanceState(state);
 
 export const ProfilePage = ({ user, financeState, theme, authError, onThemeChange, onImportData, onUpdateProfile, onSetPin, onLogout }: ProfilePageProps) => {
   const [name, setName] = useState(user.name);
@@ -117,6 +107,7 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
   const [reviewDuplicates, setReviewDuplicates] = useState(false);
   const [avatarStatus, setAvatarStatus] = useState("");
   const [pin, setPin] = useState("");
+  const [backupPassword, setBackupPassword] = useState("");
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const uploadAvatar = async (file?: File) => {
@@ -210,6 +201,25 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
     );
   };
 
+  const exportProtectedJson = async () => {
+    if (backupPassword.length < 6) {
+      setImportStatus("Укажи пароль для защищённого backup от 6 символов.");
+      return;
+    }
+    const stamp = new Date().toISOString().slice(0, 10);
+    const customQuickAddTemplates = JSON.parse(safeGetItem(QUICK_TEMPLATES_KEY) ?? "[]") as unknown;
+    const exportPayload = {
+      ...financeState,
+      customQuickAddTemplates,
+      privacy: {
+        hideAmounts: safeGetItem(MONEY_HIDDEN_KEY) === "true",
+      },
+    };
+    const protectedPayload = await encryptJsonWithPassword(exportPayload, backupPassword);
+    downloadFile(`money-control-protected-backup-${stamp}.json`, JSON.stringify(protectedPayload, null, 2), "application/json");
+    setImportStatus("Защищённый backup создан.");
+  };
+
   const exportCsv = () => {
     const stamp = new Date().toISOString().slice(0, 10);
     downloadFile(`money-control-transactions-${stamp}.csv`, transactionsToCsv(financeState), "text/csv;charset=utf-8");
@@ -218,12 +228,22 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
   const importJson = (file?: File) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const content = String(reader.result);
         const isCsv = file.name.toLowerCase().endsWith(".csv");
         const incomingTransactions = isCsv ? csvToTransactions(content) : undefined;
-        const parsed = isCsv ? { ...financeState, transactions: [...incomingTransactions!, ...financeState.transactions] } : JSON.parse(content) as ImportableState;
+        let parsed = isCsv ? { ...financeState, transactions: [...incomingTransactions!, ...financeState.transactions] } : JSON.parse(content) as ImportableState;
+        if (!isCsv && parsed.moneyControlProtected) {
+          if (!backupPassword) {
+            setImportStatus("Этот backup защищён. Введи пароль в поле пароля backup и импортируй файл ещё раз.");
+            return;
+          }
+          parsed = await decryptJsonWithPassword<ImportableState>(
+            parsed as Required<Pick<ImportableState, "salt" | "iv" | "data">> & { iterations?: number },
+            backupPassword,
+          );
+        }
         if (!isCsv && parsed.customQuickAddTemplates) safeSetItem(QUICK_TEMPLATES_KEY, JSON.stringify(parsed.customQuickAddTemplates));
         if (!isCsv && typeof parsed.privacy?.hideAmounts === "boolean") safeSetItem(MONEY_HIDDEN_KEY, String(parsed.privacy.hideAmounts));
         const nextState = normalizeImportedState(parsed);
@@ -345,10 +365,20 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
 
         <Card>
           <SectionHeader title="Экспорт и импорт" />
+          <div className="mb-4 rounded-3xl bg-slate-50 p-4">
+            <Field label="Пароль для защищённого backup">
+              <input className={inputClass} type="password" minLength={6} value={backupPassword} onChange={(e) => setBackupPassword(e.target.value)} placeholder="Минимум 6 символов" />
+            </Field>
+            <p className="mt-2 text-xs text-muted">Используется только для зашифрованного экспорта и импорта. Обычный JSON остаётся доступен.</p>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <button className={ghostButtonClass} type="button" onClick={() => exportJson(false)}>
               <FileJson size={18} />
               Экспорт JSON
+            </button>
+            <button className={ghostButtonClass} type="button" onClick={exportProtectedJson}>
+              <Download size={18} />
+              Защищённый backup
             </button>
             <button className={ghostButtonClass} type="button" onClick={() => exportJson(true)}>
               <Download size={18} />
@@ -386,8 +416,8 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
 
         <Card>
           <SectionHeader title="Безопасность" />
-          <p className="text-sm text-muted">Пароль и сессия хранятся локально. Для личного ежедневного использования этого достаточно, но для синхронизации между устройствами понадобится backend.</p>
-          <form className="mt-4 flex gap-2" onSubmit={(e) => { e.preventDefault(); onSetPin(pin); setPin(""); }}>
+          <p className="text-sm text-muted">Это локальный профиль, данные не уходят на сервер. Пароль и PIN хранятся как hash + salt в этом браузере.</p>
+          <form className="mt-4 flex gap-2" onSubmit={async (e) => { e.preventDefault(); await onSetPin(pin); setPin(""); }}>
             <input className={inputClass} inputMode="numeric" minLength={4} placeholder="PIN для быстрого входа" value={pin} onChange={(e) => setPin(e.target.value)} />
             <button className={buttonClass} type="submit">Сохранить PIN</button>
           </form>

@@ -59,6 +59,7 @@ export interface Account {
 }
 
 export interface FinanceState {
+  schemaVersion: number;
   transactions: Transaction[];
   subscriptions: Subscription[];
   debts: Debt[];
@@ -71,9 +72,13 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password: string;
+  passwordHash?: string;
+  passwordSalt?: string;
+  password?: string;
   avatar?: string;
   createdAt: string;
   onboardingCompleted?: boolean;
+  pinHash?: string;
+  pinSalt?: string;
   pin?: string;
 }

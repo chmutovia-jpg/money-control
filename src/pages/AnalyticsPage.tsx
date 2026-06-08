@@ -1,5 +1,9 @@
+import { useRef } from "react";
+import { Download } from "lucide-react";
+import { toPng } from "html-to-image";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, EmptyState, SectionHeader } from "../components/Card";
+import { ghostButtonClass } from "../components/FormControls";
 import type { FinanceState } from "../types";
 import { currentMonth, getExpensesByCategory, getGoalsProgress, getInsights, getMonthlySeries, getMonthlySubscriptionsTotal, getTotalByType } from "../utils/calculations";
 import { formatCurrency, monthKey } from "../utils/format";
@@ -7,6 +11,7 @@ import { formatCurrency, monthKey } from "../utils/format";
 const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)", "#94a3b8"];
 
 export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
+  const wrappedRef = useRef<HTMLDivElement>(null);
   const categories = getExpensesByCategory(state.transactions, currentMonth());
   const monthly = getMonthlySeries(state.transactions);
   const insights = getInsights(state);
@@ -43,6 +48,21 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
     saved > 0 ? `Переведи часть экономии в цель сразу после дохода, пока деньги не растворились в расходах.` : "В следующем месяце начни с дневного лимита и отслеживай крупные траты.",
   ];
 
+  const saveWrappedImage = async () => {
+    if (!wrappedRef.current) return;
+    const dataUrl = await toPng(wrappedRef.current, {
+      cacheBust: true,
+      pixelRatio: 2,
+      width: wrappedRef.current.offsetWidth,
+      height: wrappedRef.current.offsetHeight,
+      backgroundColor: "#050816",
+    });
+    const link = document.createElement("a");
+    link.download = `money-control-month-wrapped-${month}.png`;
+    link.href = dataUrl;
+    link.click();
+  };
+
   return (
     <div>
       <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-wide text-muted">Финансовая картина</p><h1 className="mt-1 text-3xl font-bold text-ink">Аналитика</h1></div>
@@ -63,11 +83,12 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
         </div>
       </Card>
       <Card className="mb-5 overflow-hidden">
-        <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(96,165,250,0.24),transparent_34%),radial-gradient(circle_at_90%_10%,rgba(139,92,246,0.2),transparent_32%),rgba(255,255,255,0.06)] p-5">
+        <SectionHeader title="Month Wrapped" action={<button className={ghostButtonClass} type="button" onClick={saveWrappedImage}><Download size={18} />Сохранить как изображение</button>} />
+        <div ref={wrappedRef} className="mx-auto aspect-[4/5] w-full max-w-[540px] rounded-[34px] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(96,165,250,0.28),transparent_34%),radial-gradient(circle_at_90%_10%,rgba(139,92,246,0.22),transparent_32%),linear-gradient(145deg,#050816,#111827)] p-6 text-ink shadow-soft">
           <p className="text-sm font-semibold uppercase tracking-wide text-muted">Month Wrapped</p>
           <h2 className="mt-2 text-3xl font-bold text-ink">Итоги месяца</h2>
           <p className="mt-2 text-sm text-muted">Карточка месяца для будущего сохранения как изображение.</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Metric label="Доходы" value={formatCurrency(income)} tone="text-emerald-300" />
             <Metric label="Расходы" value={formatCurrency(expenses)} tone="text-rose-300" />
             <Metric label="Сэкономлено" value={formatCurrency(saved)} tone={saved >= 0 ? "text-blue-300" : "text-rose-300"} />

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Account, CategoryBudget, Debt, FinanceState, SavingGoal, Subscription, Transaction } from "../types";
 import { getDueRecurringTransactions, getNextRecurringDate, makeRecurringOccurrence } from "../utils/calculations";
 import { demoData } from "../utils/demoData";
+import { createDefaultAccount, emptyFinanceState, migrateFinanceState } from "../utils/migrations";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "../utils/storage";
 
 const LEGACY_STORAGE_KEY = "money-control-state";
@@ -12,28 +13,8 @@ const getStorageKey = (userId: string | null) =>
 const createId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-const defaultAccount: Account = { id: "default-account", name: "Основной", type: "card", balance: 0, currency: "RUB", color: "#60a5fa" };
-const emptyState: FinanceState = { transactions: [], subscriptions: [], debts: [], goals: [], budgets: [], accounts: [defaultAccount] };
-
-const normalizeState = (state: Partial<FinanceState>): FinanceState => {
-  const accounts = state.accounts?.length
-    ? state.accounts.map((account, index) => ({
-        ...account,
-        type: account.type ?? "card",
-        currency: "RUB" as const,
-        color: account.color ?? ["#60a5fa", "#34d399", "#a78bfa", "#fb7185", "#fbbf24"][index % 5],
-      }))
-    : [defaultAccount];
-  const fallbackAccountId = accounts[0]?.id ?? defaultAccount.id;
-  return {
-    transactions: (state.transactions ?? []).map((item) => ({ ...item, accountId: item.accountId ?? fallbackAccountId })),
-    subscriptions: (state.subscriptions ?? []).map((item) => ({ ...item, usageStatus: item.usageStatus ?? "using" })),
-    debts: state.debts ?? [],
-    goals: state.goals ?? [],
-    budgets: state.budgets ?? [],
-    accounts,
-  };
-};
+const defaultAccount: Account = createDefaultAccount();
+const emptyState = emptyFinanceState();
 
 const loadInitialState = (userId: string | null): FinanceState => {
   const storageKey = getStorageKey(userId);
@@ -46,7 +27,7 @@ const loadInitialState = (userId: string | null): FinanceState => {
     const legacy = safeGetItem(LEGACY_STORAGE_KEY);
     if (userId && legacy) {
       try {
-        const parsedLegacy = normalizeState(JSON.parse(legacy) as Partial<FinanceState>);
+        const parsedLegacy = migrateFinanceState(JSON.parse(legacy) as Partial<FinanceState>);
         safeSetItem(storageKey, JSON.stringify(parsedLegacy));
         return parsedLegacy;
       } catch {
@@ -58,7 +39,7 @@ const loadInitialState = (userId: string | null): FinanceState => {
   }
 
   try {
-    return normalizeState(JSON.parse(stored) as Partial<FinanceState>);
+    return migrateFinanceState(JSON.parse(stored) as Partial<FinanceState>);
   } catch {
     safeSetItem(storageKey, JSON.stringify(demoData));
     return demoData;
@@ -190,7 +171,7 @@ export const useFinanceData = (userId: string | null) => {
             ],
           };
         }),
-      replaceAll: (nextState: FinanceState) => setState(normalizeState(nextState)),
+      replaceAll: (nextState: FinanceState) => setState(migrateFinanceState(nextState)),
       resetAll: () => setState(emptyState),
       restoreDemo: () => setState(demoData),
     }),

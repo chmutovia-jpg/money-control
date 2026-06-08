@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "../types";
+import { hashSecret, verifySecret } from "../utils/crypto";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "../utils/storage";
 
 const USERS_KEY = "money-control-users";
@@ -16,6 +17,8 @@ const normalizeUser = (user: User): User => ({
   avatar: user.avatar && user.avatar.length <= MAX_AVATAR_LENGTH ? user.avatar : undefined,
 });
 
+const sanitizeUser = ({ password: _password, pin: _pin, ...user }: User): User => user;
+
 const loadUsers = (): User[] => {
   try {
     return (JSON.parse(safeGetItem(USERS_KEY) ?? "[]") as User[]).map(normalizeUser);
@@ -27,7 +30,7 @@ const loadUsers = (): User[] => {
 
 const writeUsers = (users: User[]) => {
   safeRemoveItem(USERS_KEY);
-  if (!safeSetItem(USERS_KEY, JSON.stringify(users.map(normalizeUser)))) {
+  if (!safeSetItem(USERS_KEY, JSON.stringify(users.map(normalizeUser).map(sanitizeUser)))) {
     throw new Error("storage write failed");
   }
 };
@@ -53,6 +56,30 @@ export const useAuth = () => {
   const currentUser = users.find((user) => user.id === currentUserId) ?? null;
 
   useEffect(() => {
+    const migrateUsers = async () => {
+      const migrated = await Promise.all(
+        users.map(async (user) => {
+          let next = { ...user };
+          if (next.password && (!next.passwordHash || !next.passwordSalt)) {
+            const password = await hashSecret(next.password);
+            next = { ...next, passwordHash: password.hash, passwordSalt: password.salt };
+          }
+          if (next.pin && (!next.pinHash || !next.pinSalt)) {
+            const pin = await hashSecret(next.pin);
+            next = { ...next, pinHash: pin.hash, pinSalt: pin.salt };
+          }
+          return sanitizeUser(next);
+        }),
+      );
+      if (JSON.stringify(migrated) !== JSON.stringify(users.map(sanitizeUser))) {
+        saveUsers(migrated);
+        setUsers(migrated);
+      }
+    };
+    if (users.some((user) => user.password || user.pin)) void migrateUsers();
+  }, [users]);
+
+  useEffect(() => {
     saveUsers(users);
   }, [users]);
 
@@ -67,7 +94,7 @@ export const useAuth = () => {
 
   const api = useMemo(
     () => ({
-      register: ({ name, email, password }: { name: string; email: string; password: string }) => {
+      register: async ({ name, email, password }: { name: string; email: string; password: string }) => {
         const cleanName = name.trim();
         const cleanEmail = normalizeEmail(email);
         setError("");
@@ -87,11 +114,13 @@ export const useAuth = () => {
           setError("Пользователь с таким email уже есть.");
           return false;
         }
+        const secret = await hashSecret(password);
         const user: User = {
           id: createId(),
           name: cleanName,
           email: cleanEmail,
-          password,
+          passwordHash: secret.hash,
+          passwordSalt: secret.salt,
           createdAt: new Date().toISOString(),
           onboardingCompleted: false,
         };
@@ -99,30 +128,56 @@ export const useAuth = () => {
         setCurrentUserId(user.id);
         return true;
       },
-      login: ({ email, password }: { email: string; password: string }) => {
+      login: async ({ email, password }: { email: string; password: string }) => {
         const cleanEmail = normalizeEmail(email);
         setError("");
-        const user = users.find((item) => item.email === cleanEmail && item.password === password);
+        const user = users.find((item) => item.email === cleanEmail);
         if (!user) {
           setError("Неверный email или пароль.");
           return false;
         }
-        setCurrentUserId(user.id);
-        return true;
-      },
-      loginWithPin: (pin: string) => {
-        setError("");
-        const user = users.find((item) => item.pin && item.pin === pin);
-        if (!user) {
-          setError("PIN не найден.");
+        const ok = user.password
+          ? user.password === password
+          : await verifySecret(password, user.passwordHash, user.passwordSalt);
+        if (!ok) {
+          setError("Неверный email или пароль.");
           return false;
+        }
+        if (user.password) {
+          const secret = await hashSecret(password);
+          const nextUsers = users.map((item) => (item.id === user.id ? sanitizeUser({ ...item, passwordHash: secret.hash, passwordSalt: secret.salt }) : item));
+          saveUsers(nextUsers);
+          setUsers(nextUsers);
         }
         setCurrentUserId(user.id);
         return true;
       },
-      setPin: (pin: string) => {
+      loginWithPin: async (pin: string) => {
+        setError("");
+        const matches = await Promise.all(
+          users.map(async (item) => ({
+            user: item,
+            ok: item.pin ? item.pin === pin : await verifySecret(pin, item.pinHash, item.pinSalt),
+          })),
+        );
+        const user = matches.find((item) => item.ok)?.user;
+        if (!user) {
+          setError("PIN не найден.");
+          return false;
+        }
+        if (user.pin) {
+          const secret = await hashSecret(pin);
+          const nextUsers = users.map((item) => (item.id === user.id ? sanitizeUser({ ...item, pinHash: secret.hash, pinSalt: secret.salt }) : item));
+          saveUsers(nextUsers);
+          setUsers(nextUsers);
+        }
+        setCurrentUserId(user.id);
+        return true;
+      },
+      setPin: async (pin: string) => {
         if (!currentUserId || pin.length < 4) return;
-        const nextUsers = users.map((user) => (user.id === currentUserId ? { ...user, pin } : user));
+        const secret = await hashSecret(pin);
+        const nextUsers = users.map((user) => (user.id === currentUserId ? sanitizeUser({ ...user, pinHash: secret.hash, pinSalt: secret.salt }) : user));
         saveUsers(nextUsers);
         setUsers(nextUsers);
       },
@@ -130,12 +185,14 @@ export const useAuth = () => {
         setError("");
         setCurrentUserId(null);
       },
-      demoLogin: () => {
+      demoLogin: async () => {
+        const secret = await hashSecret("demo123");
         const demoUser: User = {
           id: "demo-user",
           name: "Демо пользователь",
           email: "demo@money-control.local",
-          password: "demo123",
+          passwordHash: secret.hash,
+          passwordSalt: secret.salt,
           createdAt: new Date().toISOString(),
           onboardingCompleted: true,
         };

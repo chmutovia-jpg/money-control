@@ -1,6 +1,7 @@
 import type { FinanceState } from "../types";
 
 export const demoData: FinanceState = {
+  schemaVersion: 2,
   accounts: [
     { id: "a1", name: "Основная карта", type: "card", balance: 22000, currency: "RUB", color: "#60a5fa" },
     { id: "a2", name: "Наличные", type: "cash", balance: 6500, currency: "RUB", color: "#34d399" },
