@@ -4,7 +4,7 @@ import type { FinanceState } from "../types";
 import { currentMonth, getExpensesByCategory, getInsights, getMonthlySeries, getMonthlySubscriptionsTotal, getTotalByType } from "../utils/calculations";
 import { formatCurrency, monthKey } from "../utils/format";
 
-const colors = ["#60a5fa", "#34d399", "#fb7185", "#a5b4fc", "#2dd4bf", "#fbbf24", "#94a3b8"];
+const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)", "#94a3b8"];
 
 export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
   const categories = getExpensesByCategory(state.transactions, currentMonth());
@@ -68,7 +68,7 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
         </Card>
         <Card>
           <SectionHeader title="Доходы и расходы по месяцам" />
-          {monthly.length ? <div className="h-64 sm:h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.16)" /><XAxis dataKey="month" /><YAxis tickFormatter={(value) => `${Math.round(Number(value) / 1000)}к`} /><Tooltip formatter={(value) => formatCurrency(Number(value))} /><Bar dataKey="доходы" fill="#34d399" radius={[10, 10, 0, 0]} isAnimationActive animationBegin={60} animationDuration={650} /><Bar dataKey="расходы" fill="#fb7185" radius={[10, 10, 0, 0]} isAnimationActive animationBegin={120} animationDuration={650} /></BarChart></ResponsiveContainer></div> : <EmptyState title="Нет данных" text="История появится после первых операций." />}
+          {monthly.length ? <div className="h-64 sm:h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthly}><defs><linearGradient id="incomeGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="var(--success)" stopOpacity={0.95} /><stop offset="100%" stopColor="var(--success)" stopOpacity={0.42} /></linearGradient><linearGradient id="expenseGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="var(--danger)" stopOpacity={0.95} /><stop offset="100%" stopColor="var(--danger)" stopOpacity={0.42} /></linearGradient></defs><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.16)" /><XAxis dataKey="month" /><YAxis tickFormatter={(value) => `${Math.round(Number(value) / 1000)}к`} /><Tooltip formatter={(value) => formatCurrency(Number(value))} /><Bar dataKey="доходы" fill="url(#incomeGradient)" radius={[12, 12, 4, 4]} isAnimationActive animationBegin={60} animationDuration={650} /><Bar dataKey="расходы" fill="url(#expenseGradient)" radius={[12, 12, 4, 4]} isAnimationActive animationBegin={120} animationDuration={650} /></BarChart></ResponsiveContainer></div> : <EmptyState title="Нет данных" text="Добавь операции, и здесь появится динамика доходов и расходов." />}
         </Card>
       </div>
       <Card className="mt-5">

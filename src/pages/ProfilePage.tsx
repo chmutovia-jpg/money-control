@@ -2,7 +2,7 @@ import { Camera, Download, FileJson, LogOut, Moon, Save, Sun, Upload, UserCircle
 import { useRef, useState } from "react";
 import { Card, SectionHeader } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
-import type { AppTheme } from "../hooks/useTheme";
+import { themeOptions, type AppTheme } from "../hooks/useTheme";
 import type { FinanceState, Transaction, User } from "../types";
 import { formatDate } from "../utils/format";
 import { filterDuplicateTransactions, findDuplicateTransactions } from "../utils/imports";
@@ -282,23 +282,26 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
 
         <Card>
           <SectionHeader title="Внешний вид" />
-          <div className="grid grid-cols-2 gap-2 rounded-3xl bg-slate-50 p-1">
-            <button
-              type="button"
-              onClick={() => onThemeChange("dark")}
-              className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${theme === "dark" ? "bg-blue-500 text-white shadow-card" : "text-muted hover:bg-white/10"}`}
-            >
-              <Moon size={18} />
-              Тёмная
-            </button>
-            <button
-              type="button"
-              onClick={() => onThemeChange("light")}
-              className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${theme === "light" ? "bg-blue-500 text-white shadow-card" : "text-muted hover:bg-white/10"}`}
-            >
-              <Sun size={18} />
-              Светлая
-            </button>
+          <div className="grid gap-3 md:grid-cols-2">
+            {themeOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => onThemeChange(option.id)}
+                className={`liquid-hover rounded-3xl border p-4 text-left transition ${theme === option.id ? "border-blue-300/60 bg-blue-400/10 shadow-[0_0_34px_rgba(96,165,250,0.22)]" : "border-white/10 bg-slate-50"}`}
+              >
+                <div className="mb-4 flex gap-2">
+                  {option.swatches.map((color) => <span key={color} className="h-8 flex-1 rounded-2xl border border-white/10" style={{ backgroundColor: color }} />)}
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-ink">{option.name}</p>
+                    <p className="mt-1 text-xs text-muted">{option.description}</p>
+                  </div>
+                  {option.id.includes("light") || option.id.includes("paper") ? <Sun size={18} className="text-muted" /> : <Moon size={18} className="text-muted" />}
+                </div>
+              </button>
+            ))}
           </div>
         </Card>
 

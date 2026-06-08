@@ -1,4 +1,4 @@
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { formatCurrency } from "../utils/format";
@@ -74,5 +74,49 @@ export const AnimatedNumber = ({
   }, [reduced, value]);
 
   const rounded = Math.round(display);
-  return <>{currency ? formatCurrency(rounded) : `${rounded}${suffix}`}</>;
+  const rendered = currency ? formatCurrency(rounded) : `${rounded}${suffix}`;
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.span key={rendered.includes("•••") ? "hidden" : rendered} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduced ? 0.08 : 0.18, ease: "easeOut" }}>
+        {rendered}
+      </motion.span>
+    </AnimatePresence>
+  );
 };
+
+export const AnimatedProgress = ({ value, className = "" }: { value: number; className?: string }) => {
+  const reduced = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={{ width: reduced ? `${value}%` : "0%" }}
+      animate={{ width: `${value}%` }}
+      transition={{ duration: reduced ? 0.12 : 0.65, ease: "easeOut" }}
+    />
+  );
+};
+
+export const AnimatedModal = ({ children }: { children: ReactNode }) => {
+  const reduced = useReducedMotion();
+  return (
+    <motion.div
+      initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 16 }}
+      animate={reduced ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+      exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 14 }}
+      transition={{ duration: reduced ? 0.12 : 0.24, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+export const AnimatedToast = ({ children }: { children: ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16, scale: 0.97 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: 10, scale: 0.98 }}
+    transition={{ duration: 0.22, ease: "easeOut" }}
+  >
+    {children}
+  </motion.div>
+);

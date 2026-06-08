@@ -6,6 +6,26 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, "Segoe UI", sans-serif;
   color: #f4f7fb;
   background: #010308;
+  --app-bg: radial-gradient(circle at 18% 8%, rgba(70, 117, 189, 0.055), transparent 30rem), radial-gradient(circle at 86% 18%, rgba(29, 78, 216, 0.035), transparent 28rem), linear-gradient(180deg, #02050a 0%, #010308 52%, #000103 100%);
+  --glass-bg: linear-gradient(145deg, rgba(255,255,255,0.105), rgba(255,255,255,0.045) 46%, rgba(255,255,255,0.07)), rgba(14, 20, 31, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(255,255,255,0.04), 0 0 34px rgba(96,165,250,0.08), 0 24px 64px rgba(0,0,0,0.46);
+  --nav-bg: linear-gradient(145deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05)), rgba(14, 20, 31, 0.82);
+  --modal-bg: var(--glass-bg);
+  --toast-bg: var(--glass-bg);
+  --accent: #60a5fa;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+  --ink: #f4f7fb;
+  --muted: #9aa6b8;
+  --soft-row: rgba(255,255,255,0.055);
+  --chart-1: #60a5fa;
+  --chart-2: #34d399;
+  --chart-3: #fb7185;
+  --chart-4: #a78bfa;
+  --chart-5: #2dd4bf;
+  --chart-6: #fbbf24;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -27,10 +47,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 18% 8%, rgba(70, 117, 189, 0.055), transparent 30rem),
-    radial-gradient(circle at 86% 18%, rgba(29, 78, 216, 0.035), transparent 28rem),
-    linear-gradient(180deg, #02050a 0%, #010308 52%, #000103 100%);
+  background: var(--app-bg);
   letter-spacing: 0;
 }
 
@@ -58,10 +75,9 @@ button:disabled {
   position: relative;
   isolation: isolate;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at 18% 8%, rgba(70, 117, 189, 0.055), transparent 30rem),
-    radial-gradient(circle at 86% 18%, rgba(29, 78, 216, 0.035), transparent 28rem),
-    linear-gradient(180deg, #02050a 0%, #010308 52%, #000103 100%) !important;
+  background: var(--app-bg) !important;
+  color: var(--ink);
+  transition: background 320ms ease, color 220ms ease;
 }
 
 .app-shell::before,
@@ -78,7 +94,7 @@ button:disabled {
   width: 48rem;
   height: 48rem;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.04), rgba(15, 23, 42, 0.02) 48%, transparent 72%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 20%, transparent), rgba(15, 23, 42, 0.02) 48%, transparent 72%);
 }
 
 .app-shell::after {
@@ -87,23 +103,24 @@ button:disabled {
   width: 44rem;
   height: 44rem;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.03), rgba(15, 23, 42, 0.015) 50%, transparent 74%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--success) 14%, transparent), rgba(15, 23, 42, 0.015) 50%, transparent 74%);
+}
+
+.app-shell::selection {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.app-shell::marker {
+  color: var(--accent);
 }
 
 .glass-panel,
 .glass-sidebar,
 .glass-bottom-nav {
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.045) 46%, rgba(255, 255, 255, 0.07)),
-    rgba(14, 20, 31, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
-    0 0 0 1px rgba(96, 165, 250, 0.04),
-    0 0 34px rgba(96, 165, 250, 0.08),
-    0 24px 64px rgba(0, 0, 0, 0.46);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
   backdrop-filter: blur(24px) saturate(128%);
   -webkit-backdrop-filter: blur(24px) saturate(128%);
 }
@@ -115,6 +132,7 @@ button:disabled {
 .glass-sidebar,
 .glass-bottom-nav {
   position: fixed;
+  background: var(--nav-bg);
 }
 
 .glass-panel::before,
@@ -126,7 +144,7 @@ button:disabled {
   pointer-events: none;
   background:
     radial-gradient(circle at 14% 0%, rgba(255, 255, 255, 0.16), transparent 22%),
-    radial-gradient(circle at 92% 10%, rgba(96, 165, 250, 0.12), transparent 28%),
+    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 28%),
     linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.055) 46%, transparent 56%);
   opacity: 0.82;
   mix-blend-mode: screen;
@@ -146,14 +164,12 @@ button:disabled {
 @media (hover: hover) and (pointer: fine) {
   .liquid-hover:hover {
     transform: translateY(-4px) scale(1.01);
-    border-color: rgba(147, 197, 253, 0.28);
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.055) 44%, rgba(96, 165, 250, 0.06)),
-      rgba(16, 23, 35, 0.76);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border));
+    background: var(--glass-bg);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.16),
       0 0 0 1px rgba(147, 197, 253, 0.08),
-      0 0 42px rgba(96, 165, 250, 0.18),
+      0 0 42px color-mix(in srgb, var(--accent) 18%, transparent),
       0 28px 70px rgba(0, 0, 0, 0.5);
   }
 }
@@ -168,7 +184,7 @@ button:disabled {
 /* Dark liquid-glass overrides for repeated Tailwind utility classes in page rows and badges. */
 .bg-slate-50,
 .bg-slate-100 {
-  background-color: rgba(255, 255, 255, 0.055) !important;
+  background-color: var(--soft-row) !important;
 }
 
 .hover\:bg-slate-50:hover,
@@ -186,11 +202,11 @@ button:disabled {
 .text-slate-500,
 .text-slate-600,
 .text-muted {
-  color: #9aa6b8 !important;
+  color: var(--muted) !important;
 }
 
 .text-ink {
-  color: #f4f7fb !important;
+  color: var(--ink) !important;
 }
 
 .text-slate-950 {
@@ -242,10 +258,101 @@ select option {
 .recharts-default-tooltip {
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 18px !important;
-  background: rgba(15, 23, 42, 0.92) !important;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34) !important;
-  color: #f4f7fb !important;
+  background: var(--toast-bg) !important;
+  box-shadow: var(--glass-shadow) !important;
+  color: var(--ink) !important;
   backdrop-filter: blur(20px);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent) !important;
+}
+
+.app-shell::before {
+  animation: premium-parallax 18s ease-in-out infinite alternate;
+}
+
+.app-shell::after {
+  animation: premium-parallax 22s ease-in-out infinite alternate-reverse;
+}
+
+.app-shell > main::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.18;
+  background-image: radial-gradient(rgba(255,255,255,0.18) 0.6px, transparent 0.6px);
+  background-size: 4px 4px;
+  mix-blend-mode: overlay;
+}
+
+@keyframes premium-parallax {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(24px, -18px, 0) scale(1.04); }
+}
+
+.app-shell[data-theme="midnight-finance"] {
+  --app-bg: radial-gradient(circle at 18% 8%, rgba(59,130,246,0.09), transparent 30rem), radial-gradient(circle at 86% 18%, rgba(20,184,166,0.05), transparent 28rem), linear-gradient(180deg, #02050a 0%, #010308 55%, #000103 100%);
+  --glass-bg: linear-gradient(145deg, rgba(255,255,255,0.105), rgba(255,255,255,0.045) 46%, rgba(255,255,255,0.07)), rgba(14,20,31,0.72);
+  --nav-bg: linear-gradient(145deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05)), rgba(9,14,23,0.88);
+}
+
+.app-shell[data-theme="graphite-pro"] {
+  --app-bg: radial-gradient(circle at 20% 0%, rgba(148,163,184,0.08), transparent 26rem), linear-gradient(180deg, #0b0d10 0%, #08090b 100%);
+  --glass-bg: linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.035)), rgba(25,28,34,0.76);
+  --nav-bg: rgba(18,20,25,0.9);
+  --accent: #a3a3a3;
+  --success: #86efac;
+  --warning: #fde68a;
+  --danger: #fda4af;
+  --chart-1: #d4d4d4;
+  --chart-2: #86efac;
+  --chart-3: #fda4af;
+  --chart-4: #93c5fd;
+}
+
+.app-shell[data-theme="aurora"] {
+  --app-bg: radial-gradient(circle at 12% 12%, rgba(45,212,191,0.16), transparent 30rem), radial-gradient(circle at 88% 8%, rgba(168,85,247,0.16), transparent 28rem), radial-gradient(circle at 50% 92%, rgba(96,165,250,0.1), transparent 30rem), linear-gradient(180deg, #050816 0%, #09111f 100%);
+  --glass-bg: linear-gradient(145deg, rgba(45,212,191,0.11), rgba(255,255,255,0.05) 46%, rgba(168,85,247,0.08)), rgba(7,17,31,0.74);
+  --accent: #2dd4bf;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+  --chart-1: #2dd4bf;
+  --chart-2: #a78bfa;
+  --chart-3: #60a5fa;
+}
+
+.app-shell[data-theme="glass-light"],
+.app-shell[data-theme="minimal-paper"] {
+  --ink: #0f172a;
+  --muted: #64748b;
+  --glass-border: rgba(15,23,42,0.08);
+  --glass-shadow: inset 0 1px 0 rgba(255,255,255,0.92), 0 0 0 1px rgba(59,130,246,0.05), 0 18px 44px rgba(15,23,42,0.12);
+  --soft-row: rgba(15,23,42,0.045);
+}
+
+.app-shell[data-theme="glass-light"] {
+  --app-bg: radial-gradient(circle at 18% 8%, rgba(96,165,250,0.2), transparent 30rem), radial-gradient(circle at 88% 12%, rgba(20,184,166,0.14), transparent 28rem), linear-gradient(180deg, #f6f8fc 0%, #eef3f9 52%, #e8eef7 100%);
+  --glass-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.66)), rgba(255,255,255,0.72);
+  --nav-bg: rgba(255,255,255,0.82);
+  --accent: #2563eb;
+}
+
+.app-shell[data-theme="minimal-paper"] {
+  --app-bg: radial-gradient(circle at 14% 4%, rgba(59,130,246,0.1), transparent 24rem), linear-gradient(180deg, #faf7f0 0%, #f4efe5 100%);
+  --glass-bg: linear-gradient(145deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58)), rgba(250,247,240,0.74);
+  --nav-bg: rgba(255,252,246,0.86);
+  --accent: #0f766e;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #e11d48;
 }
 
 .app-shell[data-theme="light"] {
@@ -258,7 +365,13 @@ select option {
 
 .app-shell[data-theme="light"] .glass-panel,
 .app-shell[data-theme="light"] .glass-sidebar,
-.app-shell[data-theme="light"] .glass-bottom-nav {
+.app-shell[data-theme="light"] .glass-bottom-nav,
+.app-shell[data-theme="glass-light"] .glass-panel,
+.app-shell[data-theme="glass-light"] .glass-sidebar,
+.app-shell[data-theme="glass-light"] .glass-bottom-nav,
+.app-shell[data-theme="minimal-paper"] .glass-panel,
+.app-shell[data-theme="minimal-paper"] .glass-sidebar,
+.app-shell[data-theme="minimal-paper"] .glass-bottom-nav {
   border-color: rgba(15, 23, 42, 0.08);
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.66)),
@@ -271,7 +384,13 @@ select option {
 
 .app-shell[data-theme="light"] .glass-panel::before,
 .app-shell[data-theme="light"] .glass-sidebar::before,
-.app-shell[data-theme="light"] .glass-bottom-nav::before {
+.app-shell[data-theme="light"] .glass-bottom-nav::before,
+.app-shell[data-theme="glass-light"] .glass-panel::before,
+.app-shell[data-theme="glass-light"] .glass-sidebar::before,
+.app-shell[data-theme="glass-light"] .glass-bottom-nav::before,
+.app-shell[data-theme="minimal-paper"] .glass-panel::before,
+.app-shell[data-theme="minimal-paper"] .glass-sidebar::before,
+.app-shell[data-theme="minimal-paper"] .glass-bottom-nav::before {
   background:
     radial-gradient(circle at 14% 0%, rgba(255, 255, 255, 0.7), transparent 22%),
     radial-gradient(circle at 92% 10%, rgba(96, 165, 250, 0.16), transparent 28%),
@@ -281,18 +400,34 @@ select option {
 
 .app-shell[data-theme="light"] .text-ink,
 .app-shell[data-theme="light"] .text-slate-300,
-.app-shell[data-theme="light"] .text-white {
+.app-shell[data-theme="light"] .text-white,
+.app-shell[data-theme="glass-light"] .text-ink,
+.app-shell[data-theme="glass-light"] .text-slate-300,
+.app-shell[data-theme="glass-light"] .text-white,
+.app-shell[data-theme="minimal-paper"] .text-ink,
+.app-shell[data-theme="minimal-paper"] .text-slate-300,
+.app-shell[data-theme="minimal-paper"] .text-white {
   color: #0f172a !important;
 }
 
 .app-shell[data-theme="light"] .text-muted,
 .app-shell[data-theme="light"] .text-slate-500,
-.app-shell[data-theme="light"] .text-slate-600 {
+.app-shell[data-theme="light"] .text-slate-600,
+.app-shell[data-theme="glass-light"] .text-muted,
+.app-shell[data-theme="glass-light"] .text-slate-500,
+.app-shell[data-theme="glass-light"] .text-slate-600,
+.app-shell[data-theme="minimal-paper"] .text-muted,
+.app-shell[data-theme="minimal-paper"] .text-slate-500,
+.app-shell[data-theme="minimal-paper"] .text-slate-600 {
   color: #64748b !important;
 }
 
 .app-shell[data-theme="light"] .bg-slate-50,
-.app-shell[data-theme="light"] .bg-slate-100 {
+.app-shell[data-theme="light"] .bg-slate-100,
+.app-shell[data-theme="glass-light"] .bg-slate-50,
+.app-shell[data-theme="glass-light"] .bg-slate-100,
+.app-shell[data-theme="minimal-paper"] .bg-slate-50,
+.app-shell[data-theme="minimal-paper"] .bg-slate-100 {
   background-color: rgba(15, 23, 42, 0.045) !important;
 }
 
@@ -300,44 +435,76 @@ select option {
 .app-shell[data-theme="light"] .border-slate-100,
 .app-shell[data-theme="light"] .border-slate-200,
 .app-shell[data-theme="light"] .border-white\/10,
-.app-shell[data-theme="light"] .border-white\/15 {
+.app-shell[data-theme="light"] .border-white\/15,
+.app-shell[data-theme="glass-light"] .border-white,
+.app-shell[data-theme="glass-light"] .border-slate-100,
+.app-shell[data-theme="glass-light"] .border-slate-200,
+.app-shell[data-theme="glass-light"] .border-white\/10,
+.app-shell[data-theme="glass-light"] .border-white\/15,
+.app-shell[data-theme="minimal-paper"] .border-white,
+.app-shell[data-theme="minimal-paper"] .border-slate-100,
+.app-shell[data-theme="minimal-paper"] .border-slate-200,
+.app-shell[data-theme="minimal-paper"] .border-white\/10,
+.app-shell[data-theme="minimal-paper"] .border-white\/15 {
   border-color: rgba(15, 23, 42, 0.1) !important;
 }
 
 .app-shell[data-theme="light"] input,
 .app-shell[data-theme="light"] select,
-.app-shell[data-theme="light"] textarea {
+.app-shell[data-theme="light"] textarea,
+.app-shell[data-theme="glass-light"] input,
+.app-shell[data-theme="glass-light"] select,
+.app-shell[data-theme="glass-light"] textarea,
+.app-shell[data-theme="minimal-paper"] input,
+.app-shell[data-theme="minimal-paper"] select,
+.app-shell[data-theme="minimal-paper"] textarea {
   color-scheme: light;
   background-color: rgba(255, 255, 255, 0.78) !important;
   border-color: rgba(15, 23, 42, 0.12) !important;
   color: #0f172a !important;
 }
 
-.app-shell[data-theme="light"] select option {
+.app-shell[data-theme="light"] select option,
+.app-shell[data-theme="glass-light"] select option,
+.app-shell[data-theme="minimal-paper"] select option {
   color: #0f172a;
   background: #ffffff;
 }
 
-.app-shell[data-theme="light"] .bg-white\/90 {
+.app-shell[data-theme="light"] .bg-white\/90,
+.app-shell[data-theme="glass-light"] .bg-white\/90,
+.app-shell[data-theme="minimal-paper"] .bg-white\/90 {
   background-color: rgba(15, 23, 42, 0.9) !important;
 }
 
-.app-shell[data-theme="light"] .bg-white\/90.text-slate-950 {
+.app-shell[data-theme="light"] .bg-white\/90.text-slate-950,
+.app-shell[data-theme="glass-light"] .bg-white\/90.text-slate-950,
+.app-shell[data-theme="minimal-paper"] .bg-white\/90.text-slate-950 {
   color: #ffffff !important;
 }
 
 .app-shell[data-theme="light"] .hover\:bg-white\/10:hover,
-.app-shell[data-theme="light"] .hover\:bg-white\/15:hover {
+.app-shell[data-theme="light"] .hover\:bg-white\/15:hover,
+.app-shell[data-theme="glass-light"] .hover\:bg-white\/10:hover,
+.app-shell[data-theme="glass-light"] .hover\:bg-white\/15:hover,
+.app-shell[data-theme="minimal-paper"] .hover\:bg-white\/10:hover,
+.app-shell[data-theme="minimal-paper"] .hover\:bg-white\/15:hover {
   background-color: rgba(15, 23, 42, 0.08) !important;
 }
 
 .app-shell[data-theme="light"] .recharts-cartesian-axis-tick-value,
-.app-shell[data-theme="light"] .recharts-legend-item-text {
+.app-shell[data-theme="light"] .recharts-legend-item-text,
+.app-shell[data-theme="glass-light"] .recharts-cartesian-axis-tick-value,
+.app-shell[data-theme="glass-light"] .recharts-legend-item-text,
+.app-shell[data-theme="minimal-paper"] .recharts-cartesian-axis-tick-value,
+.app-shell[data-theme="minimal-paper"] .recharts-legend-item-text {
   fill: #64748b;
   color: #64748b !important;
 }
 
-.app-shell[data-theme="light"] .recharts-default-tooltip {
+.app-shell[data-theme="light"] .recharts-default-tooltip,
+.app-shell[data-theme="glass-light"] .recharts-default-tooltip,
+.app-shell[data-theme="minimal-paper"] .recharts-default-tooltip {
   border-color: rgba(15, 23, 42, 0.12) !important;
   background: rgba(255, 255, 255, 0.92) !important;
   color: #0f172a !important;

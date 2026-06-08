@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Layout } from "./components/Layout";
 import { QuickAddModal } from "./components/QuickAddModal";
 import { Toasts, type ToastItem } from "./components/Toasts";
@@ -33,6 +34,8 @@ const App = () => {
   const [amountsHidden, setAmountsHiddenState] = useState(areAmountsHidden);
   const [locked, setLocked] = useState(false);
   const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
+  const reduced = useReducedMotion();
   const auth = useAuth();
   const theme = useTheme();
   const finance = useFinanceData(auth.currentUser?.id ?? null);
@@ -90,25 +93,40 @@ const App = () => {
   if (locked && auth.currentUser.pin) {
     return (
       <div className="app-shell flex min-h-screen items-center justify-center px-4 text-ink" data-theme={theme.theme}>
-        <form
-          className="glass-panel w-full max-w-sm rounded-5xl p-6 text-center shadow-soft"
+        <motion.form
+          className="glass-panel w-full max-w-sm rounded-[32px] p-6 text-center shadow-soft"
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.97 }}
+          animate={pinError && !reduced ? { x: [0, -8, 8, -5, 5, 0], opacity: 1, y: 0, scale: 1 } : { opacity: 1, y: 0, scale: 1, x: 0 }}
+          transition={{ duration: pinError ? 0.34 : 0.28, ease: "easeOut" }}
           onSubmit={(event) => {
             event.preventDefault();
             if (pinInput === auth.currentUser?.pin) {
               setLocked(false);
               setPinInput("");
             } else {
+              setPinError(true);
+              window.setTimeout(() => setPinError(false), 420);
               notify("Неверный PIN");
             }
           }}
         >
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-400/10 text-blue-200"><Lock size={26} /></div>
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-400/10 text-blue-200 shadow-[0_0_34px_rgba(96,165,250,0.22)]"><Lock size={28} /></div>
           <h1 className="text-2xl font-bold">Money Control закрыт</h1>
           <p className="mt-2 text-sm text-muted">Введите локальный PIN, чтобы открыть приложение.</p>
-          <input className={`${inputClass} mt-5 text-center text-xl tracking-[0.3em]`} inputMode="numeric" type="password" value={pinInput} onChange={(e) => setPinInput(e.target.value)} autoFocus />
+          <div className="mt-5 flex justify-center gap-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <motion.span
+                key={index}
+                className={`h-3 w-3 rounded-full border border-white/20 ${pinInput.length > index ? "bg-blue-300" : "bg-white/10"}`}
+                animate={{ scale: pinInput.length > index ? 1.12 : 1 }}
+                transition={{ duration: 0.16 }}
+              />
+            ))}
+          </div>
+          <input className={`${inputClass} mt-5 text-center text-xl tracking-[0.3em]`} inputMode="numeric" type="password" value={pinInput} onChange={(e) => setPinInput(e.target.value.slice(0, 8))} autoFocus />
           <button className={`${buttonClass} mt-4 w-full`} type="submit">Разблокировать</button>
           <Toasts items={toasts} onDismiss={removeToast} />
-        </form>
+        </motion.form>
       </div>
     );
   }

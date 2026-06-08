@@ -9,7 +9,7 @@ import type { FinanceState } from "../types";
 import { currentMonth, getAccountsWithBalance, getActiveDebtTotal, getBudgetProgress, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getFinancialTemperature, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getPaymentCalendar, getPurchaseStressTest, getTotalAccountBalance, getTotalByType } from "../utils/calculations";
 import { formatCurrency, formatDate } from "../utils/format";
 
-const colors = ["#60a5fa", "#34d399", "#fb7185", "#a5b4fc", "#2dd4bf", "#fbbf24", "#94a3b8"];
+const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)", "#94a3b8"];
 
 export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: FinanceState; onReset: () => void; onRestoreDemo: () => void }) => {
   const [stressAmount, setStressAmount] = useState("");

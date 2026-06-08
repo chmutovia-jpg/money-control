@@ -53,7 +53,7 @@ export const OnboardingPage = ({
   };
 
   return (
-    <div className="app-shell min-h-screen px-4 py-10 text-ink" data-theme="dark">
+    <div className="app-shell min-h-screen px-4 py-10 text-ink" data-theme="midnight-finance">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold">С чего начнём?</h1>
