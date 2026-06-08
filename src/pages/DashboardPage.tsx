@@ -59,9 +59,9 @@ export const DashboardPage = ({
       ? `На этой неделе снизь траты в категории "${riskyBudgets[0].category}".`
       : "Неделя выглядит спокойной: держи дневной лимит и не забывай про цели.";
   const temperatureClasses = {
-    green: "border-emerald-300/25 bg-emerald-400/10 text-emerald-100 shadow-[0_0_38px_rgba(52,211,153,0.08)]",
-    yellow: "border-amber-300/25 bg-amber-400/10 text-amber-100 shadow-[0_0_38px_rgba(251,191,36,0.08)]",
-    red: "border-rose-300/25 bg-rose-400/10 text-rose-100 shadow-[0_0_38px_rgba(251,113,133,0.1)]",
+    green: "financial-temp-green",
+    yellow: "financial-temp-yellow",
+    red: "financial-temp-red",
   };
   const temperatureIndex = temperature.status === "green" ? 0 : temperature.status === "yellow" ? 1 : 2;
   const temperaturePosition = temperature.status === "green" ? "10%" : temperature.status === "yellow" ? "50%" : "90%";
@@ -92,7 +92,7 @@ export const DashboardPage = ({
       >
         <div className="relative z-10 grid gap-7 xl:grid-cols-[1.1fr_0.9fr] xl:items-stretch">
           <div className="flex min-h-[310px] flex-col justify-between">
-            <div className={`inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${temperatureClasses[temperature.status]}`}>
+            <div className={`financial-temp-badge inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${temperatureClasses[temperature.status]}`}>
               <span className="h-2.5 w-2.5 rounded-full bg-current shadow-[0_0_18px_currentColor]" />
               Финансовая температура: {temperature.title}
             </div>
