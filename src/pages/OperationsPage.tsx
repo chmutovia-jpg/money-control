@@ -25,11 +25,11 @@ const groupLabel = (date: string) => {
 
 export const OperationsPage = ({ transactions, setActivePage }: { transactions: Transaction[]; setActivePage: (page: PageKey) => void }) => {
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense" | "recurring">("all");
-  const [dateFilter, setDateFilter] = useState<"month" | "week" | "custom">("month");
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense" | "large" | "recurring">("all");
+  const [dateFilter, setDateFilter] = useState<"today" | "month" | "week" | "custom">("month");
   const [from, setFrom] = useState(todayISO().slice(0, 8) + "01");
   const [to, setTo] = useState(todayISO());
-  const [sort, setSort] = useState<"new" | "old" | "amount">("new");
+  const [sort, setSort] = useState<"new" | "old" | "amountDesc" | "amountAsc">("new");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -37,16 +37,19 @@ export const OperationsPage = ({ transactions, setActivePage }: { transactions: 
       .filter((item) => {
         if (typeFilter === "income" && item.type !== "income") return false;
         if (typeFilter === "expense" && item.type !== "expense") return false;
+        if (typeFilter === "large" && (item.type !== "expense" || item.amount < 5000)) return false;
         if (typeFilter === "recurring" && !item.isRecurring) return false;
+        if (dateFilter === "today" && item.date !== todayISO()) return false;
         if (dateFilter === "month" && monthKey(item.date) !== todayISO().slice(0, 7)) return false;
         if (dateFilter === "week" && item.date < startOfWeek()) return false;
         if (dateFilter === "custom" && (item.date < from || item.date > to)) return false;
-        if (q && !`${item.category} ${item.comment ?? ""}`.toLowerCase().includes(q)) return false;
+        if (q && !`${item.category} ${item.amount} ${formatCurrency(item.amount)} ${item.comment ?? ""}`.toLowerCase().includes(q)) return false;
         return true;
       })
       .sort((a, b) => {
         if (sort === "old") return a.date.localeCompare(b.date);
-        if (sort === "amount") return b.amount - a.amount;
+        if (sort === "amountDesc") return b.amount - a.amount;
+        if (sort === "amountAsc") return a.amount - b.amount;
         return b.date.localeCompare(a.date);
       });
   }, [dateFilter, from, query, sort, to, transactions, typeFilter]);
@@ -71,9 +74,9 @@ export const OperationsPage = ({ transactions, setActivePage }: { transactions: 
         <SectionHeader title="Фильтры" action={<Search size={20} className="text-muted" />} />
         <div className="grid gap-3 md:grid-cols-4">
           <input className={inputClass} placeholder="Поиск" value={query} onChange={(e) => setQuery(e.target.value)} />
-          <select className={inputClass} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}><option value="all">все</option><option value="income">доходы</option><option value="expense">расходы</option><option value="recurring">повторы</option></select>
-          <select className={inputClass} value={dateFilter} onChange={(e) => setDateFilter(e.target.value as typeof dateFilter)}><option value="month">месяц</option><option value="week">неделя</option><option value="custom">свой период</option></select>
-          <select className={inputClass} value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}><option value="new">новые</option><option value="old">старые</option><option value="amount">самые дорогие</option></select>
+          <select className={inputClass} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}><option value="all">все</option><option value="income">доходы</option><option value="expense">расходы</option><option value="large">крупные траты</option><option value="recurring">повторяющиеся</option></select>
+          <select className={inputClass} value={dateFilter} onChange={(e) => setDateFilter(e.target.value as typeof dateFilter)}><option value="today">сегодня</option><option value="month">месяц</option><option value="week">неделя</option><option value="custom">свой период</option></select>
+          <select className={inputClass} value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}><option value="new">новые</option><option value="old">старые</option><option value="amountDesc">сумма по убыванию</option><option value="amountAsc">сумма по возрастанию</option></select>
         </div>
         {dateFilter === "custom" ? <div className="mt-3 grid gap-3 sm:grid-cols-2"><input className={inputClass} type="date" value={from} onChange={(e) => setFrom(e.target.value)} /><input className={inputClass} type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div> : null}
       </Card>

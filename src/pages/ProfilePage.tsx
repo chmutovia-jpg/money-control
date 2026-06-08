@@ -32,7 +32,7 @@ const csvValue = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""
 
 const transactionsToCsv = (state: FinanceState) => {
   const rows = [
-    ["id", "type", "amount", "category", "date", "comment", "isRecurring"],
+    ["id", "type", "amount", "category", "date", "comment", "isRecurring", "accountId"],
     ...state.transactions.map((item) => [
       item.id,
       item.type,
@@ -41,19 +41,30 @@ const transactionsToCsv = (state: FinanceState) => {
       item.date,
       item.comment ?? "",
       item.isRecurring ? "yes" : "no",
+      item.accountId ?? "",
     ]),
   ];
   return rows.map((row) => row.map(csvValue).join(",")).join("\n");
 };
 
-const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => ({
-  transactions: state.transactions ?? [],
+const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => {
+  const accounts = state.accounts?.length
+    ? state.accounts.map((account, index) => ({
+        ...account,
+        currency: "RUB" as const,
+        color: account.color ?? ["#60a5fa", "#34d399", "#a78bfa", "#fb7185"][index % 4],
+      }))
+    : [{ id: "main", name: "Основной", type: "card" as const, balance: 0, currency: "RUB" as const, color: "#60a5fa" }];
+  const fallbackAccountId = accounts[0].id;
+  return {
+  transactions: (state.transactions ?? []).map((item) => ({ ...item, accountId: item.accountId ?? fallbackAccountId })),
   subscriptions: state.subscriptions ?? [],
   debts: state.debts ?? [],
   goals: state.goals ?? [],
   budgets: state.budgets ?? [],
-  accounts: state.accounts?.length ? state.accounts : [{ id: "main", name: "Основной счёт", type: "card", balance: 0, currency: "RUB" }],
-});
+  accounts,
+  };
+};
 
 export const ProfilePage = ({ user, financeState, theme, authError, onThemeChange, onImportData, onUpdateProfile, onSetPin, onLogout }: ProfilePageProps) => {
   const [name, setName] = useState(user.name);

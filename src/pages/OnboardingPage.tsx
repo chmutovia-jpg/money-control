@@ -7,7 +7,7 @@ import { demoData } from "../utils/demoData";
 import { todayISO } from "../utils/format";
 
 const emptyState: FinanceState = {
-  accounts: [{ id: "main", name: "Основной счёт", type: "card", balance: 0, currency: "RUB" }],
+  accounts: [{ id: "main", name: "Основной", type: "card", balance: 0, currency: "RUB", color: "#60a5fa" }],
   transactions: [],
   subscriptions: [],
   debts: [],
@@ -38,7 +38,7 @@ export const OnboardingPage = ({
   const submitQuick = (event: React.FormEvent) => {
     event.preventDefault();
     const state: FinanceState = {
-      accounts: [{ id: "main", name: "Основной счёт", type: "card", balance: Number(form.balance) || 0, currency: "RUB" }],
+      accounts: [{ id: "main", name: "Основной", type: "card", balance: Number(form.balance) || 0, currency: "RUB", color: "#60a5fa" }],
       transactions: Number(form.income) > 0 ? [{ id: "income-start", type: "income", amount: Number(form.income), category: "зарплата", date: todayISO(), comment: "Месячный доход", isRecurring: true, accountId: "main" }] : [],
       subscriptions: Number(form.payments) > 0 ? [{ id: "required-start", name: "Обязательные платежи", amount: Number(form.payments), period: "monthly", nextPaymentDate: todayISO(), category: "обязательные", isActive: true, usageStatus: "using" }] : [],
       debts: [],
@@ -68,7 +68,7 @@ export const OnboardingPage = ({
             </button>
             <button className="glass-panel rounded-5xl p-6 text-left" type="button" onClick={() => setQuick(true)}>
               <Rocket className="mb-4 text-emerald-300" />
-              <p className="text-xl font-bold">Быстрый старт</p>
+              <p className="text-xl font-bold">Заполнить быстрый старт</p>
               <p className="mt-2 text-sm text-muted">Заполним основу за минуту.</p>
             </button>
             <button className="glass-panel rounded-5xl p-6 text-left" type="button" onClick={() => onFinish(demoData)}>
@@ -80,6 +80,9 @@ export const OnboardingPage = ({
         ) : (
           <Card>
             <SectionHeader title="Быстрый старт" />
+            <div className="mb-4 grid gap-2 text-sm text-muted sm:grid-cols-5">
+              {["1. Баланс", "2. Доход", "3. Платежи", "4. Цель", "5. Категории"].map((step) => <span key={step} className="rounded-2xl bg-slate-50 px-3 py-2 font-semibold">{step}</span>)}
+            </div>
             <form className="grid gap-4 md:grid-cols-2" onSubmit={submitQuick}>
               <Field label="Стартовый баланс"><input className={inputClass} type="number" value={form.balance} onChange={(e) => setForm({ ...form, balance: e.target.value })} /></Field>
               <Field label="Месячный доход"><input className={inputClass} type="number" value={form.income} onChange={(e) => setForm({ ...form, income: e.target.value })} /></Field>

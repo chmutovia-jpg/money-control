@@ -1,4 +1,4 @@
-const CACHE_NAME = "money-control-v1";
+const CACHE_NAME = "money-control-v2";
 const ASSETS = ["./", "./manifest.json", "./icon-192.svg", "./icon-512.svg"];
 
 self.addEventListener("install", (event) => {

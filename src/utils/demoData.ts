@@ -2,9 +2,9 @@ import type { FinanceState } from "../types";
 
 export const demoData: FinanceState = {
   accounts: [
-    { id: "a1", name: "Основная карта", type: "card", balance: 22000, currency: "RUB" },
-    { id: "a2", name: "Наличные", type: "cash", balance: 6500, currency: "RUB" },
-    { id: "a3", name: "Накопления", type: "savings", balance: 118000, currency: "RUB" },
+    { id: "a1", name: "Основная карта", type: "card", balance: 22000, currency: "RUB", color: "#60a5fa" },
+    { id: "a2", name: "Наличные", type: "cash", balance: 6500, currency: "RUB", color: "#34d399" },
+    { id: "a3", name: "Накопления", type: "savings", balance: 118000, currency: "RUB", color: "#a78bfa" },
   ],
   transactions: [
     { id: "t1", type: "income", amount: 145000, category: "зарплата", date: "2026-06-03", comment: "Основная работа", accountId: "a1" },

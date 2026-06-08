@@ -1,8 +1,8 @@
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, EmptyState, SectionHeader } from "../components/Card";
 import type { FinanceState } from "../types";
-import { currentMonth, getExpensesByCategory, getInsights, getMonthlySeries } from "../utils/calculations";
-import { formatCurrency } from "../utils/format";
+import { currentMonth, getExpensesByCategory, getInsights, getMonthlySeries, getMonthlySubscriptionsTotal, getTotalByType } from "../utils/calculations";
+import { formatCurrency, monthKey } from "../utils/format";
 
 const colors = ["#60a5fa", "#34d399", "#fb7185", "#a5b4fc", "#2dd4bf", "#fbbf24", "#94a3b8"];
 
@@ -11,18 +11,49 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
   const monthly = getMonthlySeries(state.transactions);
   const insights = getInsights(state);
   const top = categories.slice(0, 5);
+  const month = currentMonth();
+  const monthTransactions = state.transactions.filter((item) => monthKey(item.date) === month);
+  const income = getTotalByType(state.transactions, "income", month);
+  const expenses = getTotalByType(state.transactions, "expense", month);
+  const saved = income - expenses;
+  const biggestCategory = categories[0];
+  const biggestPurchase = monthTransactions.filter((item) => item.type === "expense").sort((a, b) => b.amount - a.amount)[0];
+  const daysPassed = new Date().getDate();
+  const averageDailyExpense = expenses / Math.max(1, daysPassed);
+  const subscriptions = getMonthlySubscriptionsTotal(state.subscriptions);
+  const monthTips = [
+    biggestCategory ? `Поставь лимит на категорию “${biggestCategory.name}” на 10-15% ниже текущих расходов.` : "Добавь первые расходы, чтобы советы стали точнее.",
+    subscriptions > 0 ? `Проверь подписки: сейчас они занимают ${Math.round((subscriptions / Math.max(1, expenses)) * 100)}% расходов месяца.` : "Добавь подписки, чтобы видеть их влияние на бюджет.",
+    saved > 0 ? `Переведи часть экономии в цель сразу после дохода, пока деньги не растворились в расходах.` : "В следующем месяце начни с дневного лимита и отслеживай крупные траты.",
+  ];
 
   return (
     <div>
       <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-wide text-muted">Финансовая картина</p><h1 className="mt-1 text-3xl font-bold text-ink">Аналитика</h1></div>
+      <Card className="mb-5">
+        <SectionHeader title="Итоги месяца" />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Metric label="Потрачено" value={formatCurrency(expenses)} tone="text-rose-300" />
+          <Metric label="Заработано" value={formatCurrency(income)} tone="text-emerald-300" />
+          <Metric label="Сэкономлено" value={formatCurrency(saved)} tone={saved >= 0 ? "text-blue-300" : "text-rose-300"} />
+          <Metric label="Подписки" value={formatCurrency(subscriptions)} tone="text-violet-300" />
+          <Metric label="Дорогая категория" value={biggestCategory?.name ?? "нет данных"} />
+          <Metric label="Большая покупка" value={biggestPurchase ? formatCurrency(biggestPurchase.amount) : "нет данных"} />
+          <Metric label="Средний расход в день" value={formatCurrency(Math.round(averageDailyExpense))} />
+          <Metric label="Операций" value={String(monthTransactions.length)} />
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          {monthTips.map((tip) => <div key={tip} className="rounded-3xl border border-white/10 bg-slate-50 p-4 text-sm font-medium text-ink">{tip}</div>)}
+        </div>
+      </Card>
       <div className="grid gap-5 xl:grid-cols-2">
         <Card>
           <SectionHeader title="Расходы по категориям" />
-          {categories.length ? <div className="h-64 sm:h-80"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={categories} dataKey="value" nameKey="name" innerRadius={48} outerRadius={96} paddingAngle={4}>{categories.map((_, index) => <Cell key={index} fill={colors[index % colors.length]} />)}</Pie><Tooltip formatter={(value) => formatCurrency(Number(value))} /></PieChart></ResponsiveContainer></div> : <EmptyState title="Нет данных" text="Добавь расходы для круговой диаграммы." />}
+          {categories.length ? <div className="h-64 sm:h-80"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={categories} dataKey="value" nameKey="name" innerRadius={48} outerRadius={96} paddingAngle={4} isAnimationActive animationBegin={80} animationDuration={650}>{categories.map((_, index) => <Cell key={index} fill={colors[index % colors.length]} />)}</Pie><Tooltip formatter={(value) => formatCurrency(Number(value))} /></PieChart></ResponsiveContainer></div> : <EmptyState title="Нет данных" text="Добавь расходы для круговой диаграммы." />}
         </Card>
         <Card>
           <SectionHeader title="Доходы и расходы по месяцам" />
-          {monthly.length ? <div className="h-64 sm:h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.16)" /><XAxis dataKey="month" /><YAxis tickFormatter={(value) => `${Math.round(Number(value) / 1000)}к`} /><Tooltip formatter={(value) => formatCurrency(Number(value))} /><Bar dataKey="доходы" fill="#34d399" radius={[10, 10, 0, 0]} /><Bar dataKey="расходы" fill="#fb7185" radius={[10, 10, 0, 0]} /></BarChart></ResponsiveContainer></div> : <EmptyState title="Нет данных" text="История появится после первых операций." />}
+          {monthly.length ? <div className="h-64 sm:h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.16)" /><XAxis dataKey="month" /><YAxis tickFormatter={(value) => `${Math.round(Number(value) / 1000)}к`} /><Tooltip formatter={(value) => formatCurrency(Number(value))} /><Bar dataKey="доходы" fill="#34d399" radius={[10, 10, 0, 0]} isAnimationActive animationBegin={60} animationDuration={650} /><Bar dataKey="расходы" fill="#fb7185" radius={[10, 10, 0, 0]} isAnimationActive animationBegin={120} animationDuration={650} /></BarChart></ResponsiveContainer></div> : <EmptyState title="Нет данных" text="История появится после первых операций." />}
         </Card>
       </div>
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
@@ -43,3 +74,10 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
     </div>
   );
 };
+
+const Metric = ({ label, value, tone = "text-ink" }: { label: string; value: string; tone?: string }) => (
+  <div className="rounded-3xl bg-slate-50 p-4">
+    <p className="text-xs text-muted">{label}</p>
+    <p className={`mt-2 break-words text-xl font-bold ${tone}`}>{value}</p>
+  </div>
+);

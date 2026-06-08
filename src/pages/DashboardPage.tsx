@@ -3,6 +3,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, EmptyState, SectionHeader } from "../components/Card";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
+import { AnimatedNumber } from "../components/motion";
 import type { FinanceState } from "../types";
 import { currentMonth, getAccountsWithBalance, getActiveDebtTotal, getBudgetProgress, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getPaymentCalendar, getTotalAccountBalance, getTotalByType } from "../utils/calculations";
 import { formatCurrency, formatDate } from "../utils/format";
@@ -50,35 +51,35 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-muted">Сегодня можно потратить</p>
             <p className={`mt-3 text-5xl font-bold leading-none sm:text-6xl ${daily.isNegative ? "text-rose-300" : "text-ink"}`}>
-              {formatCurrency(Math.floor(daily.dailyLimit))}
+              <AnimatedNumber value={Math.floor(daily.dailyLimit)} />
             </p>
             <p className={`mt-4 inline-flex rounded-full px-4 py-2 text-sm font-semibold ${problemBudget ? "bg-rose-400/10 text-rose-200" : warningBudget ? "bg-amber-400/10 text-amber-100" : "bg-emerald-400/10 text-emerald-200"}`}>
               {daily.isNegative ? "Лимит ушёл в минус" : budgetStatus}
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">Баланс</p><p className="mt-1 font-bold text-ink">{formatCurrency(balance)}</p></div>
+            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">Баланс</p><p className="mt-1 font-bold text-ink"><AnimatedNumber value={balance} /></p></div>
             <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">До конца</p><p className="mt-1 font-bold text-ink">{daily.daysLeft} дн.</p></div>
-            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">Свободно</p><p className="mt-1 font-bold text-ink">{formatCurrency(daily.freeMoney)}</p></div>
+            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">Свободно</p><p className="mt-1 font-bold text-ink"><AnimatedNumber value={daily.freeMoney} /></p></div>
           </div>
         </div>
       </section>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <StatCard label="Общий баланс" value={formatCurrency(balance)} icon={Wallet} tone="blue" />
-        <StatCard label="Доходы за месяц" value={formatCurrency(income)} icon={TrendingUp} tone="green" />
-        <StatCard label="Расходы за месяц" value={formatCurrency(expenses)} icon={TrendingDown} tone="red" />
-        <StatCard label="Прогноз на конец месяца" value={formatCurrency(Math.floor(forecast.forecast))} icon={BarChart3} tone={forecast.forecast < 0 ? "red" : "blue"} hint={`Платежи: ${formatCurrency(forecast.futurePayments)}`} />
-        <StatCard label="Подписки / месяц" value={formatCurrency(subscriptions)} icon={Repeat} tone="violet" />
-        <StatCard label="Мои долги" value={formatCurrency(debts)} icon={CreditCard} tone="red" />
-        <StatCard label="Цели накоплений" value={`${goals.percent}%`} icon={Target} tone="blue" hint={`${formatCurrency(goals.current)} из ${formatCurrency(goals.target)}`} />
-        <StatCard label="Можно тратить в день" value={formatCurrency(Math.floor(daily.dailyLimit))} icon={PiggyBank} tone={daily.isNegative ? "red" : "green"} hint={daily.isNegative ? "Свободные деньги ушли в минус" : `На ${daily.daysLeft} дн. до конца месяца`} />
+        <StatCard label="Общий баланс" value={formatCurrency(balance)} numericValue={balance} icon={Wallet} tone="blue" delay={0.04} />
+        <StatCard label="Доходы за месяц" value={formatCurrency(income)} numericValue={income} icon={TrendingUp} tone="green" delay={0.1} />
+        <StatCard label="Расходы за месяц" value={formatCurrency(expenses)} numericValue={expenses} icon={TrendingDown} tone="red" delay={0.16} />
+        <StatCard label="Прогноз на конец месяца" value={formatCurrency(Math.floor(forecast.forecast))} numericValue={Math.floor(forecast.forecast)} icon={BarChart3} tone={forecast.forecast < 0 ? "red" : "blue"} hint={`Платежи: ${formatCurrency(forecast.futurePayments)}`} delay={0.22} />
+        <StatCard label="Подписки / месяц" value={formatCurrency(subscriptions)} numericValue={subscriptions} icon={Repeat} tone="violet" delay={0.28} />
+        <StatCard label="Мои долги" value={formatCurrency(debts)} numericValue={debts} icon={CreditCard} tone="red" delay={0.34} />
+        <StatCard label="Цели накоплений" value={formatCurrency(goals.current)} numericValue={goals.current} icon={Target} tone="blue" hint={`${formatCurrency(goals.current)} из ${formatCurrency(goals.target)} (${goals.percent}%)`} delay={0.4} />
+        <StatCard label="Можно тратить в день" value={formatCurrency(Math.floor(daily.dailyLimit))} numericValue={Math.floor(daily.dailyLimit)} icon={PiggyBank} tone={daily.isNegative ? "red" : "green"} hint={daily.isNegative ? "Свободные деньги ушли в минус" : `На ${daily.daysLeft} дн. до конца месяца`} delay={0.46} />
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <SectionHeader title="Прогноз денег" />
-          <p className="text-3xl font-bold text-ink">{formatCurrency(Math.floor(forecast.forecast))}</p>
+          <p className="text-3xl font-bold text-ink"><AnimatedNumber value={Math.floor(forecast.forecast)} /></p>
           <p className="mt-2 text-sm text-muted">Если продолжишь тратить в таком темпе, в конце месяца останется {formatCurrency(Math.floor(forecast.forecast))}.</p>
           <div className="mt-5 grid grid-cols-3 gap-2">
             <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Сегодня</p><p className="font-bold">{formatCurrency(balance)}</p></div>
@@ -92,7 +93,7 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
         <Card>
           <SectionHeader title="Баланс по счетам" />
           <div className="space-y-3">
-            {accountBalances.map((account) => <div key={account.id} className="flex items-center justify-between rounded-3xl bg-slate-50 p-4"><div><p className="font-semibold">{account.name}</p><p className="text-sm text-muted">{account.type}</p></div><p className="font-bold">{formatCurrency(account.currentBalance)}</p></div>)}
+            {accountBalances.map((account) => <div key={account.id} className="flex items-center justify-between rounded-3xl bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="h-4 w-4 rounded-full" style={{ backgroundColor: account.color }} /><div><p className="font-semibold">{account.name}</p><p className="text-sm text-muted">{account.type}</p></div></div><p className="font-bold">{formatCurrency(account.currentBalance)}</p></div>)}
           </div>
         </Card>
       </div>
@@ -104,7 +105,7 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
             <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={expensesByCategory} dataKey="value" nameKey="name" innerRadius={64} outerRadius={112} paddingAngle={4}>
+                  <Pie data={expensesByCategory} dataKey="value" nameKey="name" innerRadius={64} outerRadius={112} paddingAngle={4} isAnimationActive animationBegin={80} animationDuration={650}>
                     {expensesByCategory.map((_, index) => <Cell key={index} fill={colors[index % colors.length]} />)}
                   </Pie>
                   <Tooltip formatter={(value) => formatCurrency(Number(value))} />

@@ -49,9 +49,10 @@ export interface CategoryBudget {
 export interface Account {
   id: string;
   name: string;
-  type: "card" | "cash" | "savings" | "credit" | "other";
+  type: "card" | "cash" | "savings" | "credit" | "crypto" | "other";
   balance: number;
   currency: "RUB";
+  color: string;
 }
 
 export interface FinanceState {

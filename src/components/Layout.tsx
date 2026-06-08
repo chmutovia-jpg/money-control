@@ -1,5 +1,6 @@
 import { BarChart3, CalendarDays, CreditCard, Gauge, Home, LogOut, PiggyBank, Plus, Receipt, Repeat, Target, TrendingUp, UserCircle, WalletCards } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { PageKey } from "../App";
 import type { AppTheme } from "../hooks/useTheme";
 import type { User } from "../types";
@@ -41,7 +42,10 @@ export const Layout = ({
   onQuickAdd: () => void;
   theme: AppTheme;
   children: React.ReactNode;
-}) => (
+}) => {
+  const reduced = useReducedMotion();
+
+  return (
   <div className="app-shell min-h-screen bg-surface text-ink" data-theme={theme}>
     <aside className="glass-sidebar fixed left-0 top-0 hidden h-screen w-64 flex-col p-4 shadow-soft backdrop-blur-2xl lg:flex">
       <div className="flex shrink-0 items-center gap-3">
@@ -107,14 +111,17 @@ export const Layout = ({
       {children}
     </main>
 
-    <button
+    <motion.button
       type="button"
       onClick={onQuickAdd}
-      className="fixed bottom-24 right-4 z-30 inline-flex items-center justify-center gap-2 rounded-full bg-blue-500 px-5 py-4 text-sm font-bold text-white shadow-soft transition hover:bg-blue-400 lg:bottom-6 lg:right-8"
+      whileHover={reduced ? undefined : { scale: 1.03 }}
+      whileTap={reduced ? undefined : { scale: 0.97 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className="fixed bottom-24 right-4 z-30 inline-flex items-center justify-center gap-2 rounded-full bg-blue-500 px-5 py-4 text-sm font-bold text-white shadow-[0_0_34px_rgba(59,130,246,0.38),0_18px_44px_rgba(0,0,0,0.38)] transition hover:bg-blue-400 lg:bottom-6 lg:right-8"
     >
       <Plus size={20} />
       Добавить
-    </button>
+    </motion.button>
 
     <nav className="glass-bottom-nav fixed bottom-0 left-0 right-0 z-20 px-2 py-2 shadow-soft backdrop-blur-2xl lg:hidden">
       <div className="grid grid-cols-5 gap-1">
@@ -134,4 +141,5 @@ export const Layout = ({
       </div>
     </nav>
   </div>
-);
+  );
+};

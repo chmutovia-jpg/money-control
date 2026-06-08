@@ -85,6 +85,8 @@ export const AuthPage = ({ theme, error, onLogin, onRegister, onLoginWithPin, on
         </Card>
 
         <Card className="mt-4">
+          <p className="mb-3 text-sm font-semibold text-ink">Быстрый локальный вход по PIN</p>
+          <p className="mb-3 text-xs text-muted">PIN работает только на этом устройстве и в этом браузере.</p>
           <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); onLoginWithPin(pin); }}>
             <input className={inputClass} inputMode="numeric" placeholder="PIN-код" value={pin} onChange={(e) => setPin(e.target.value)} />
             <button className={ghostButtonClass} type="submit">PIN</button>

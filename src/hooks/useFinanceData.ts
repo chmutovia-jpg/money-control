@@ -11,22 +11,37 @@ const getStorageKey = (userId: string | null) =>
 const createId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-const defaultAccount: Account = { id: "default-account", name: "Основной счёт", type: "card", balance: 0, currency: "RUB" };
+const defaultAccount: Account = { id: "default-account", name: "Основной", type: "card", balance: 0, currency: "RUB", color: "#60a5fa" };
 const emptyState: FinanceState = { transactions: [], subscriptions: [], debts: [], goals: [], budgets: [], accounts: [defaultAccount] };
 
-const normalizeState = (state: Partial<FinanceState>): FinanceState => ({
-  transactions: (state.transactions ?? []).map((item) => ({ ...item, accountId: item.accountId ?? (state.accounts?.[0]?.id ?? defaultAccount.id) })),
-  subscriptions: (state.subscriptions ?? []).map((item) => ({ ...item, usageStatus: item.usageStatus ?? "using" })),
-  debts: state.debts ?? [],
-  goals: state.goals ?? [],
-  budgets: state.budgets ?? [],
-  accounts: state.accounts?.length ? state.accounts : [defaultAccount],
-});
+const normalizeState = (state: Partial<FinanceState>): FinanceState => {
+  const accounts = state.accounts?.length
+    ? state.accounts.map((account, index) => ({
+        ...account,
+        type: account.type ?? "card",
+        currency: "RUB" as const,
+        color: account.color ?? ["#60a5fa", "#34d399", "#a78bfa", "#fb7185", "#fbbf24"][index % 5],
+      }))
+    : [defaultAccount];
+  const fallbackAccountId = accounts[0]?.id ?? defaultAccount.id;
+  return {
+    transactions: (state.transactions ?? []).map((item) => ({ ...item, accountId: item.accountId ?? fallbackAccountId })),
+    subscriptions: (state.subscriptions ?? []).map((item) => ({ ...item, usageStatus: item.usageStatus ?? "using" })),
+    debts: state.debts ?? [],
+    goals: state.goals ?? [],
+    budgets: state.budgets ?? [],
+    accounts,
+  };
+};
 
 const loadInitialState = (userId: string | null): FinanceState => {
   const storageKey = getStorageKey(userId);
   const stored = safeGetItem(storageKey);
   if (!stored) {
+    if (userId === "demo-user") {
+      safeSetItem(storageKey, JSON.stringify(demoData));
+      return demoData;
+    }
     const legacy = safeGetItem(LEGACY_STORAGE_KEY);
     if (userId && legacy) {
       try {
