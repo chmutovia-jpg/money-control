@@ -5,7 +5,7 @@ import { Layout } from "./components/Layout";
 import { QuickAddModal } from "./components/QuickAddModal";
 import { Toasts, type ToastItem } from "./components/Toasts";
 import { PageTransition } from "./components/motion";
-import { buttonClass, inputClass } from "./components/FormControls";
+import { buttonClass } from "./components/FormControls";
 import { useAuth } from "./hooks/useAuth";
 import { useFinanceData } from "./hooks/useFinanceData";
 import { useTheme } from "./hooks/useTheme";
@@ -61,11 +61,11 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    setLocked(Boolean(auth.currentUser?.pinHash || auth.currentUser?.pin));
-  }, [auth.currentUser?.id, auth.currentUser?.pinHash, auth.currentUser?.pin]);
+    setLocked(Boolean(auth.currentUser?.pinHash));
+  }, [auth.currentUser?.id, auth.currentUser?.pinHash]);
 
   useEffect(() => {
-    if (!(auth.currentUser?.pinHash || auth.currentUser?.pin) || locked) return;
+    if (!auth.currentUser?.pinHash || locked) return;
     let timer = window.setTimeout(() => setLocked(true), 3 * 60_000);
     const resetTimer = () => {
       window.clearTimeout(timer);
@@ -80,7 +80,7 @@ const App = () => {
       window.removeEventListener("keydown", resetTimer);
       window.removeEventListener("touchstart", resetTimer);
     };
-  }, [auth.currentUser?.pinHash, auth.currentUser?.pin, locked]);
+  }, [auth.currentUser?.pinHash, locked]);
 
   const notify = (message: string, action?: ToastItem["action"]) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -126,7 +126,9 @@ const App = () => {
     );
   }
 
-  if (locked && (auth.currentUser.pinHash || auth.currentUser.pin)) {
+  const pinKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "Стереть"];
+
+  if (locked && auth.currentUser.pinHash) {
     return (
       <div className="app-shell flex min-h-screen items-center justify-center px-4 text-ink" data-theme={theme.theme}>
         <motion.form
@@ -136,9 +138,7 @@ const App = () => {
           transition={{ duration: pinError ? 0.34 : 0.28, ease: "easeOut" }}
           onSubmit={async (event) => {
             event.preventDefault();
-            const pinOk = auth.currentUser?.pin
-              ? pinInput === auth.currentUser.pin
-              : await verifySecret(pinInput, auth.currentUser?.pinHash, auth.currentUser?.pinSalt);
+            const pinOk = await verifySecret(pinInput, auth.currentUser?.pinHash, auth.currentUser?.pinSalt);
             if (pinOk) {
               setLocked(false);
               setPinInput("");
@@ -163,8 +163,23 @@ const App = () => {
               />
             ))}
           </div>
-          <input className={`${inputClass} mt-5 text-center text-xl tracking-[0.3em]`} inputMode="numeric" type="password" value={pinInput} onChange={(e) => setPinInput(e.target.value.slice(0, 8))} autoFocus />
-          <button className={`${buttonClass} mt-4 w-full`} type="submit">Разблокировать</button>
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {pinKeys.map((key) => (
+              <button
+                key={key}
+                className={`rounded-3xl border border-white/10 bg-white/10 px-3 py-4 text-lg font-bold text-ink transition hover:bg-white/15 ${key === "Стереть" ? "text-sm" : ""}`}
+                type="button"
+                onClick={() => {
+                  if (key === "⌫") setPinInput((value) => value.slice(0, -1));
+                  else if (key === "Стереть") setPinInput("");
+                  else setPinInput((value) => `${value}${key}`.slice(0, 8));
+                }}
+              >
+                {key}
+              </button>
+            ))}
+          </div>
+          <button className={`${buttonClass} mt-4 w-full`} type="submit" disabled={pinInput.length < 4}>Разблокировать</button>
           <Toasts items={toasts} onDismiss={removeToast} />
         </motion.form>
         <AppSplash visible={splashVisible} theme={theme.theme} />

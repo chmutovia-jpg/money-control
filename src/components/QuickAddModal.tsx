@@ -1,6 +1,6 @@
 import { Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Account, Debt, SavingGoal, Subscription, Transaction } from "../types";
 import { parseQuickExpense } from "../utils/categoryRules";
 import { todayISO } from "../utils/format";
@@ -65,6 +65,12 @@ export const QuickAddModal = ({
     accountId: accounts[0]?.id ?? "",
   });
   const isOptionalExpense = mode === "expense" && economyMode && !essentialCategories.includes(form.category.trim().toLowerCase());
+
+  useEffect(() => {
+    if (!form.accountId && accounts[0]?.id) {
+      setForm((current) => ({ ...current, accountId: accounts[0].id }));
+    }
+  }, [accounts, form.accountId]);
 
   const recentTemplates = useMemo(
     () =>

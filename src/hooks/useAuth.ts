@@ -12,30 +12,35 @@ const createId = () =>
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 const MAX_AVATAR_LENGTH = 80_000;
 
-const normalizeUser = (user: User): User => ({
+type LegacyUser = User & {
+  password?: string;
+  pin?: string;
+};
+
+const normalizeUser = (user: LegacyUser): LegacyUser => ({
   ...user,
   avatar: user.avatar && user.avatar.length <= MAX_AVATAR_LENGTH ? user.avatar : undefined,
 });
 
-const sanitizeUser = ({ password: _password, pin: _pin, ...user }: User): User => user;
+const sanitizeUser = ({ password: _password, pin: _pin, ...user }: LegacyUser): User => user;
 
-const loadUsers = (): User[] => {
+const loadUsers = (): LegacyUser[] => {
   try {
-    return (JSON.parse(safeGetItem(USERS_KEY) ?? "[]") as User[]).map(normalizeUser);
+    return (JSON.parse(safeGetItem(USERS_KEY) ?? "[]") as LegacyUser[]).map(normalizeUser);
   } catch {
     safeRemoveItem(USERS_KEY);
     return [];
   }
 };
 
-const writeUsers = (users: User[]) => {
+const writeUsers = (users: LegacyUser[]) => {
   safeRemoveItem(USERS_KEY);
   if (!safeSetItem(USERS_KEY, JSON.stringify(users.map(normalizeUser).map(sanitizeUser)))) {
     throw new Error("storage write failed");
   }
 };
 
-const saveUsers = (users: User[]) => {
+const saveUsers = (users: LegacyUser[]) => {
   try {
     writeUsers(users);
   } catch {
@@ -49,7 +54,7 @@ const saveUsers = (users: User[]) => {
 };
 
 export const useAuth = () => {
-  const [users, setUsers] = useState<User[]>(loadUsers);
+  const [users, setUsers] = useState<LegacyUser[]>(loadUsers);
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => safeGetItem(SESSION_KEY));
   const [error, setError] = useState("");
 
@@ -231,5 +236,5 @@ export const useAuth = () => {
     [currentUserId, users],
   );
 
-  return { users, currentUser, error, ...api };
+  return { users: users.map(sanitizeUser), currentUser: currentUser ? sanitizeUser(currentUser) : null, error, ...api };
 };

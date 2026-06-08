@@ -16,10 +16,10 @@ export const Field = ({
 );
 
 export const inputClass =
-  "w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-ink outline-none transition placeholder:text-slate-500 focus:border-blue-300/60 focus:bg-white/15 focus:ring-4 focus:ring-blue-300/10";
+  "w-full rounded-[calc(var(--radius-card)-10px)] border border-[var(--border-glass)] bg-white/10 px-4 py-3 text-sm text-ink outline-none transition placeholder:text-slate-500 focus:border-blue-300/60 focus:bg-white/15 focus:ring-4 focus:ring-blue-300/10";
 
 export const buttonClass =
-  "inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-blue-400";
+  "inline-flex items-center justify-center gap-2 rounded-[calc(var(--radius-card)-10px)] bg-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-blue-400";
 
 export const ghostButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-ink transition hover:bg-white/15";
+  "inline-flex items-center justify-center gap-2 rounded-[calc(var(--radius-card)-10px)] border border-[var(--border-glass)] bg-white/10 px-4 py-3 text-sm font-semibold text-ink transition hover:bg-white/15";

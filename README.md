@@ -6,11 +6,17 @@ Premium local-first приложение для контроля личных ф
 
 ## Screenshots
 
-![Dashboard](./public/screenshot-dashboard.svg)
+![Dashboard](./docs/screenshots/dashboard.png)
 
-![Mobile view](./public/screenshot-mobile.svg)
+![Quick Add](./docs/screenshots/quick-add.png)
 
-Скриншоты Quick Add, Analytics, PIN-lock и Themes можно добавить в `public/` после финальной визуальной съёмки из браузера.
+![Analytics](./docs/screenshots/analytics.png)
+
+![PIN-lock](./docs/screenshots/pin-lock.png)
+
+![Themes](./docs/screenshots/themes.png)
+
+![Mobile view](./docs/screenshots/mobile.png)
 
 ## Product Highlights
 
@@ -25,7 +31,7 @@ Premium local-first приложение для контроля личных ф
 - PWA с app icon, manifest, shortcuts и service worker.
 - Локальный PIN-lock, скрытие сумм и темы.
 
-## Privacy
+## Security / Local-first
 
 Money Control — local-first приложение. Данные хранятся в `localStorage` текущего браузера и не уходят на сервер. Это не облачный банковский аккаунт и не синхронизация между устройствами. Для переноса данных используй JSON backup.
 

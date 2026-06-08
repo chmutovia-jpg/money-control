@@ -74,11 +74,9 @@ export interface User {
   email: string;
   passwordHash?: string;
   passwordSalt?: string;
-  password?: string;
   avatar?: string;
   createdAt: string;
   onboardingCompleted?: boolean;
   pinHash?: string;
   pinSalt?: string;
-  pin?: string;
 }

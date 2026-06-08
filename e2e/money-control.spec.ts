@@ -11,7 +11,7 @@ const clearApp = async (page: import("@playwright/test").Page) => {
 const demoLogin = async (page: import("@playwright/test").Page) => {
   await clearApp(page);
   await page.getByRole("button", { name: "Попробовать демо" }).click();
-  await expect(page.getByText("Сегодня можно потратить")).toBeVisible();
+  await expect(page.getByText("План недели")).toBeVisible({ timeout: 10_000 });
 };
 
 test("demo login opens Dashboard", async ({ page }) => {
@@ -28,7 +28,7 @@ test("registration and onboarding open the app", async ({ page }) => {
   await page.locator("form").getByRole("button", { name: "Создать локальный профиль" }).click();
   await expect(page.getByText("С чего начнём?")).toBeVisible();
   await page.getByRole("button", { name: "Начать с нуля" }).click();
-  await expect(page.getByText("Сегодня можно потратить")).toBeVisible();
+  await expect(page.getByText("План недели")).toBeVisible({ timeout: 10_000 });
 });
 
 test("Quick Add creates coffee expense", async ({ page }) => {
@@ -50,9 +50,15 @@ test("PIN lock opens and unlocks", async ({ page }) => {
   });
   await page.reload();
   await expect(page.getByText("Money Control закрыт")).toBeVisible();
-  await page.locator("input[type='password']").fill("1234");
+  await page.getByRole("button", { name: "1" }).click();
+  await page.getByRole("button", { name: "2" }).click();
+  await page.getByRole("button", { name: "3" }).click();
+  await page.getByRole("button", { name: "4" }).click();
   await page.getByRole("button", { name: "Разблокировать" }).click();
   await expect(page.getByText("Сегодня можно потратить")).toBeVisible();
+  const migratedUser = await page.evaluate(() => JSON.parse(localStorage.getItem("money-control-users") || "[]")[0]);
+  expect(migratedUser.pin).toBeUndefined();
+  expect(migratedUser.pinHash).toBeTruthy();
 });
 
 test("theme choice persists after reload", async ({ page }) => {
