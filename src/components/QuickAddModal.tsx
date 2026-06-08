@@ -19,6 +19,7 @@ const quickExpenses = [
 type Mode = "expense" | "income" | "subscription" | "debt" | "goal";
 type QuickTemplate = { label: string; amount: number; category: string };
 const QUICK_TEMPLATES_KEY = "money-control-quick-templates";
+const essentialCategories = ["еда", "транспорт", "жильё", "здоровье", "подписки", "аптека", "обязательные"];
 
 const loadTemplates = (): QuickTemplate[] => {
   try {
@@ -37,6 +38,7 @@ export const QuickAddModal = ({
   onAddGoal,
   accounts,
   transactions,
+  economyMode,
   onNotify,
 }: {
   open: boolean;
@@ -47,6 +49,7 @@ export const QuickAddModal = ({
   onAddGoal: (goal: Omit<SavingGoal, "id">) => void;
   accounts: Account[];
   transactions: Transaction[];
+  economyMode: boolean;
   onNotify: (message: string) => void;
 }) => {
   const reduced = useReducedMotion();
@@ -61,6 +64,7 @@ export const QuickAddModal = ({
     comment: "",
     accountId: accounts[0]?.id ?? "",
   });
+  const isOptionalExpense = mode === "expense" && economyMode && !essentialCategories.includes(form.category.trim().toLowerCase());
 
   const recentTemplates = useMemo(
     () =>
@@ -195,6 +199,7 @@ export const QuickAddModal = ({
           {mode !== "expense" && mode !== "income" ? <Field label={mode === "debt" ? "Кому" : "Название"}><input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></Field> : null}
           <Field label="Сумма"><input className={inputClass} type="number" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required /></Field>
           {(mode === "expense" || mode === "income" || mode === "subscription") ? <Field label="Категория"><input className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></Field> : null}
+          {isOptionalExpense ? <div className="rounded-3xl border border-amber-300/25 bg-amber-400/10 p-3 text-sm font-semibold text-amber-200">Режим экономии: эта категория не обязательная. Проверь, точно ли стоит добавить трату сейчас.</div> : null}
           {(mode === "expense" || mode === "income") ? <Field label="Счёт"><select className={inputClass} value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })}>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></Field> : null}
           <Field label={mode === "goal" || mode === "debt" ? "Дедлайн" : "Дата"}><input className={inputClass} type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           {(mode === "expense" || mode === "income") ? <Field label="Комментарий"><input className={inputClass} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} /></Field> : null}

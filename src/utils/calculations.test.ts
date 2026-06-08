@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FinanceState, Transaction } from "../types";
-import { getBalance, getBudgetProgress, getDailySpendLimit, getDueRecurringTransactions, getEndOfMonthForecast } from "./calculations";
+import { getBalance, getBudgetProgress, getCashflowForecast, getDailySpendLimit, getDueRecurringTransactions, getEndOfMonthForecast, getPaymentCalendar } from "./calculations";
 import { filterDuplicateTransactions } from "./imports";
 import { todayISO } from "./format";
 
@@ -49,6 +49,41 @@ describe("finance calculations", () => {
       { id: "r1", type: "expense", amount: 500, category: "подписки", date: todayISO(), isRecurring: true, recurringFrequency: "monthly", nextRunDate: todayISO() },
     ]);
     expect(due).toHaveLength(1);
+  });
+
+  it("adds recurring income to cashflow forecast", () => {
+    const state = baseState([
+      { id: "r-income", type: "income", amount: 5000, category: "зарплата", date: todayISO(), accountId: "a1", isRecurring: true, recurringFrequency: "monthly", nextRunDate: todayISO() },
+    ]);
+    expect(getCashflowForecast(state, 1)[0].balance).toBeGreaterThan(10000);
+  });
+
+  it("generates daily recurring events through the horizon", () => {
+    const state = baseState([
+      { id: "r-daily", type: "expense", amount: 100, category: "еда", date: todayISO(), accountId: "a1", isRecurring: true, recurringFrequency: "daily", nextRunDate: todayISO() },
+    ]);
+    expect(getPaymentCalendar(state, 3).filter((event) => event.type === "recurring")).toHaveLength(4);
+  });
+
+  it("generates weekly recurring events through the horizon", () => {
+    const state = baseState([
+      { id: "r-weekly", type: "expense", amount: 700, category: "транспорт", date: todayISO(), accountId: "a1", isRecurring: true, recurringFrequency: "weekly", nextRunDate: todayISO() },
+    ]);
+    expect(getPaymentCalendar(state, 15).filter((event) => event.type === "recurring")).toHaveLength(3);
+  });
+
+  it("generates monthly recurring events through the horizon", () => {
+    const state = baseState([
+      { id: "r-monthly", type: "expense", amount: 1200, category: "подписки", date: todayISO(), accountId: "a1", isRecurring: true, recurringFrequency: "monthly", nextRunDate: todayISO() },
+    ]);
+    expect(getPaymentCalendar(state, 40).filter((event) => event.type === "recurring")).toHaveLength(2);
+  });
+
+  it("generates yearly recurring events through the horizon", () => {
+    const state = baseState([
+      { id: "r-yearly", type: "expense", amount: 5000, category: "страховка", date: todayISO(), accountId: "a1", isRecurring: true, recurringFrequency: "yearly", nextRunDate: todayISO() },
+    ]);
+    expect(getPaymentCalendar(state, 370).filter((event) => event.type === "recurring")).toHaveLength(2);
   });
 
   it("filters possible duplicate imports", () => {

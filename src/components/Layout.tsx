@@ -4,6 +4,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { PageKey } from "../App";
 import type { AppTheme } from "../hooks/useTheme";
 import type { User } from "../types";
+import { SmartAlertsCenter } from "./SmartAlertsCenter";
+import type { SmartAlert } from "../utils/smartAlerts";
 
 const navItems: Array<{ key: PageKey; label: string; icon: LucideIcon }> = [
   { key: "dashboard", label: "Главная", icon: Home },
@@ -35,6 +37,7 @@ export const Layout = ({
   amountsHidden,
   onToggleAmountsHidden,
   theme,
+  alerts,
   children,
 }: {
   activePage: PageKey;
@@ -45,6 +48,7 @@ export const Layout = ({
   amountsHidden: boolean;
   onToggleAmountsHidden: () => void;
   theme: AppTheme;
+  alerts: SmartAlert[];
   children: React.ReactNode;
 }) => {
   const reduced = useReducedMotion();
@@ -77,6 +81,9 @@ export const Layout = ({
         ))}
       </nav>
       <div className="mt-4 shrink-0">
+        <div className="mb-3 flex justify-end">
+          <SmartAlertsCenter alerts={alerts} />
+        </div>
         <button type="button" onClick={onToggleAmountsHidden} className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-semibold text-muted transition hover:bg-white/15">
           {amountsHidden ? <Eye size={17} /> : <EyeOff size={17} />}
           {amountsHidden ? "Показать суммы" : "Скрыть суммы"}
@@ -113,6 +120,7 @@ export const Layout = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <SmartAlertsCenter alerts={alerts} />
           <button type="button" onClick={onToggleAmountsHidden} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-muted">
             {amountsHidden ? <Eye size={20} /> : <EyeOff size={20} />}
           </button>

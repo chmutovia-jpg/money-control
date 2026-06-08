@@ -1,4 +1,4 @@
-import { BarChart3, CreditCard, Lightbulb, PiggyBank, Repeat, Target, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { BarChart3, CreditCard, Lightbulb, PiggyBank, Repeat, Target, TrendingDown, TrendingUp, Wallet, Zap } from "lucide-react";
 import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, EmptyState, SectionHeader } from "../components/Card";
@@ -6,12 +6,24 @@ import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
 import { AnimatedNumber } from "../components/motion";
 import type { FinanceState } from "../types";
-import { currentMonth, getAccountsWithBalance, getActiveDebtTotal, getBudgetProgress, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getFinancialTemperature, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getPaymentCalendar, getPurchaseStressTest, getTotalAccountBalance, getTotalByType } from "../utils/calculations";
+import { currentMonth, getAccountsWithBalance, getActiveDebtTotal, getBudgetProgress, getCashflowForecast, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getFinancialTemperature, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getPaymentCalendar, getPurchaseStressTest, getTotalAccountBalance, getTotalByType } from "../utils/calculations";
 import { formatCurrency, formatDate } from "../utils/format";
 
 const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)", "#94a3b8"];
 
-export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: FinanceState; onReset: () => void; onRestoreDemo: () => void }) => {
+export const DashboardPage = ({
+  state,
+  economyMode,
+  onToggleEconomyMode,
+  onReset,
+  onRestoreDemo,
+}: {
+  state: FinanceState;
+  economyMode: boolean;
+  onToggleEconomyMode: () => void;
+  onReset: () => void;
+  onRestoreDemo: () => void;
+}) => {
   const [stressAmount, setStressAmount] = useState("");
   const month = currentMonth();
   const income = getTotalByType(state.transactions, "income", month);
@@ -25,6 +37,7 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
   const accountBalances = getAccountsWithBalance(state.accounts, state.transactions);
   const nearestPayments = getPaymentCalendar(state, 30).slice(0, 3);
   const budgets = getBudgetProgress(state.budgets, state.transactions, month);
+  const riskyBudgets = budgets.filter((budget) => budget.status !== "ok").slice(0, 3);
   const problemBudget = budgets.find((budget) => budget.status === "over");
   const warningBudget = budgets.find((budget) => budget.status === "warning");
   const budgetStatus = problemBudget ? `Превышен лимит: ${problemBudget.category}` : warningBudget ? `Внимание: ${warningBudget.category} уже ${warningBudget.percent}%` : "Бюджет в норме";
@@ -35,6 +48,14 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
   const daysLeft = daysInMonth - new Date().getDate();
   const temperature = getFinancialTemperature(state);
   const stress = getPurchaseStressTest(state, Number(stressAmount) || 0);
+  const weekPayments = getPaymentCalendar(state, 7).filter((event) => event.direction === "expense").slice(0, 3);
+  const cashflowRisk = getCashflowForecast(state, 14).find((day) => day.isLow);
+  const economyDailyLimit = Math.max(0, Math.floor(daily.dailyLimit * 0.8));
+  const weekAdvice = cashflowRisk
+    ? `Держи траты ниже ${formatCurrency(economyDailyLimit || Math.floor(daily.dailyLimit))} в день до ${formatDate(cashflowRisk.date)}.`
+    : riskyBudgets[0]
+      ? `На этой неделе снизь траты в категории "${riskyBudgets[0].category}".`
+      : "Неделя выглядит спокойной: держи дневной лимит и не забывай про цели.";
   const temperatureClasses = {
     green: "border-emerald-300/25 bg-emerald-400/10 text-emerald-100",
     yellow: "border-amber-300/25 bg-amber-400/10 text-amber-100",
@@ -50,6 +71,10 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
           <p className="mt-2 max-w-2xl text-muted">Контроль доходов, расходов, подписок, долгов и целей в одном спокойном интерфейсе.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold shadow-card transition ${economyMode ? "bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/20" : "border border-white/15 bg-white/10 text-ink hover:bg-white/15"}`} onClick={onToggleEconomyMode} type="button">
+            <Zap size={17} />
+            {economyMode ? "Экономия включена" : "Режим экономии"}
+          </button>
           <button className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-ink shadow-card transition hover:bg-white/15" onClick={onRestoreDemo} type="button">Вернуть демо</button>
           <button className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600" onClick={onReset} type="button">Очистить все данные</button>
         </div>
@@ -93,6 +118,51 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
           </div>
         </Card>
       </div>
+
+      <Card className="mb-5">
+        <SectionHeader title="План недели" action={<Lightbulb size={20} className="text-blue-300" />} />
+        <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-3xl border border-white/10 bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Финансовый ассистент недели</p>
+            <p className="mt-2 text-2xl font-bold text-ink">{weekAdvice}</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-white/10 p-3">
+                <p className="text-xs text-muted">Дневной лимит</p>
+                <p className="mt-1 font-bold text-ink">{formatCurrency(Math.floor(daily.dailyLimit))}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-3">
+                <p className="text-xs text-muted">Эконом-лимит</p>
+                <p className="mt-1 font-bold text-emerald-300">{formatCurrency(economyDailyLimit)}</p>
+              </div>
+            </div>
+            {cashflowRisk ? <p className="mt-3 rounded-2xl bg-rose-400/10 px-3 py-2 text-sm font-semibold text-rose-200">Риск cashflow: {formatDate(cashflowRisk.date)}</p> : null}
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-3xl bg-slate-50 p-4">
+              <p className="font-bold text-ink">Ближайшие платежи</p>
+              <div className="mt-3 space-y-2">
+                {weekPayments.length ? weekPayments.map((payment) => (
+                  <div key={payment.id} className="flex justify-between gap-3 rounded-2xl bg-white/10 px-3 py-2 text-sm">
+                    <span className="truncate text-muted">{payment.title}</span>
+                    <strong className="text-ink">{formatCurrency(payment.amount)}</strong>
+                  </div>
+                )) : <p className="text-sm text-muted">На 7 дней нет обязательных платежей.</p>}
+              </div>
+            </div>
+            <div className="rounded-3xl bg-slate-50 p-4">
+              <p className="font-bold text-ink">Рискованные бюджеты</p>
+              <div className="mt-3 space-y-2">
+                {riskyBudgets.length ? riskyBudgets.map((budget) => (
+                  <div key={budget.id} className={`rounded-2xl px-3 py-2 text-sm font-semibold ${budget.status === "over" ? "bg-rose-400/10 text-rose-200" : "bg-amber-400/10 text-amber-200"}`}>
+                    {budget.category}: {budget.percent}%
+                  </div>
+                )) : <p className="text-sm text-muted">Бюджеты пока без риска.</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+        {economyMode ? <p className="mt-4 rounded-3xl border border-emerald-300/20 bg-emerald-400/10 p-4 text-sm font-semibold text-emerald-200">Режим экономии активен: фокус на еде, транспорте, жилье, здоровье и обязательных платежах. Необязательные траты подсвечиваются в Quick Add.</p> : null}
+      </Card>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Общий баланс" value={formatCurrency(balance)} numericValue={balance} icon={Wallet} tone="blue" delay={0.04} />

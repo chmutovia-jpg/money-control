@@ -1,7 +1,7 @@
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, EmptyState, SectionHeader } from "../components/Card";
 import type { FinanceState } from "../types";
-import { currentMonth, getExpensesByCategory, getInsights, getMonthlySeries, getMonthlySubscriptionsTotal, getTotalByType } from "../utils/calculations";
+import { currentMonth, getExpensesByCategory, getGoalsProgress, getInsights, getMonthlySeries, getMonthlySubscriptionsTotal, getTotalByType } from "../utils/calculations";
 import { formatCurrency, monthKey } from "../utils/format";
 
 const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)", "#94a3b8"];
@@ -21,6 +21,7 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
   const daysPassed = new Date().getDate();
   const averageDailyExpense = expenses / Math.max(1, daysPassed);
   const subscriptions = getMonthlySubscriptionsTotal(state.subscriptions);
+  const goals = getGoalsProgress(state.goals);
   const previousMonthDate = new Date(`${month}-01`);
   previousMonthDate.setMonth(previousMonthDate.getMonth() - 1);
   const previousMonth = previousMonthDate.toISOString().slice(0, 7);
@@ -59,6 +60,23 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
         </div>
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
           {monthTips.map((tip) => <div key={tip} className="rounded-3xl border border-white/10 bg-slate-50 p-4 text-sm font-medium text-ink">{tip}</div>)}
+        </div>
+      </Card>
+      <Card className="mb-5 overflow-hidden">
+        <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(96,165,250,0.24),transparent_34%),radial-gradient(circle_at_90%_10%,rgba(139,92,246,0.2),transparent_32%),rgba(255,255,255,0.06)] p-5">
+          <p className="text-sm font-semibold uppercase tracking-wide text-muted">Month Wrapped</p>
+          <h2 className="mt-2 text-3xl font-bold text-ink">Итоги месяца</h2>
+          <p className="mt-2 text-sm text-muted">Карточка месяца для будущего сохранения как изображение.</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Metric label="Доходы" value={formatCurrency(income)} tone="text-emerald-300" />
+            <Metric label="Расходы" value={formatCurrency(expenses)} tone="text-rose-300" />
+            <Metric label="Сэкономлено" value={formatCurrency(saved)} tone={saved >= 0 ? "text-blue-300" : "text-rose-300"} />
+            <Metric label="Подписки" value={formatCurrency(subscriptions)} tone="text-violet-300" />
+            <Metric label="Топ-категория" value={biggestCategory?.name ?? "нет данных"} />
+            <Metric label="Крупная покупка" value={biggestPurchase ? formatCurrency(biggestPurchase.amount) : "нет данных"} />
+            <Metric label="Цели" value={`${goals.percent}%`} tone="text-emerald-300" />
+            <Metric label="Совет" value={monthTips[0]} />
+          </div>
         </div>
       </Card>
       <div className="grid gap-5 xl:grid-cols-2">

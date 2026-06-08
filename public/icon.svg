@@ -22,6 +22,7 @@
   <g filter="url(#shadow)">
     <circle cx="354" cy="342" r="48" fill="#0B1020" stroke="#fff" stroke-opacity=".2" stroke-width="4"/>
     <circle cx="354" cy="342" r="29" fill="#34D399" fill-opacity=".18" stroke="#34D399" stroke-opacity=".86" stroke-width="8"/>
-    <path d="M343 342h22" stroke="#D1FAE5" stroke-width="8" stroke-linecap="round"/>
+    <path d="M354 323l18 8v15c0 18-10 29-18 34-8-5-18-16-18-34v-15l18-8z" fill="#34D399" fill-opacity=".16" stroke="#D1FAE5" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M345 345l7 7 13-16" fill="none" stroke="#D1FAE5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

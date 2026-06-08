@@ -10,6 +10,8 @@ import { useAuth } from "./hooks/useAuth";
 import { useFinanceData } from "./hooks/useFinanceData";
 import { useTheme } from "./hooks/useTheme";
 import { areAmountsHidden, setAmountsHidden } from "./utils/format";
+import { getSmartAlerts } from "./utils/smartAlerts";
+import { safeGetItem, safeSetItem } from "./utils/storage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { AccountsPage } from "./pages/AccountsPage";
 import { AuthPage } from "./pages/AuthPage";
@@ -36,6 +38,7 @@ const App = () => {
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
   const [splashVisible, setSplashVisible] = useState(true);
+  const [economyMode, setEconomyMode] = useState(() => safeGetItem("money-control-economy-mode") === "true");
   const reduced = useReducedMotion();
   const auth = useAuth();
   const theme = useTheme();
@@ -79,6 +82,14 @@ const App = () => {
     const next = !amountsHidden;
     setAmountsHidden(next);
     setAmountsHiddenState(next);
+  };
+  const toggleEconomyMode = () => {
+    setEconomyMode((current) => {
+      const next = !current;
+      safeSetItem("money-control-economy-mode", String(next));
+      notify(next ? "Режим экономии включён" : "Режим экономии выключен");
+      return next;
+    });
   };
 
   if (!auth.currentUser) {
@@ -147,7 +158,7 @@ const App = () => {
   }
 
   const page = {
-    dashboard: <DashboardPage state={finance.state} onReset={() => { finance.resetAll(); notify("Все данные очищены"); }} onRestoreDemo={() => { finance.restoreDemo(); notify("Демо-данные восстановлены"); }} />,
+    dashboard: <DashboardPage state={finance.state} economyMode={economyMode} onToggleEconomyMode={toggleEconomyMode} onReset={() => { finance.resetAll(); notify("Все данные очищены"); }} onRestoreDemo={() => { finance.restoreDemo(); notify("Демо-данные восстановлены"); }} />,
     operations: <OperationsPage transactions={finance.state.transactions} setActivePage={setActivePage} />,
     plan: <PlanPage setActivePage={setActivePage} />,
     accounts: <AccountsPage accounts={finance.state.accounts} transactions={finance.state.transactions} onAdd={(account) => { finance.addAccount(account); notify("Счёт создан"); }} onUpdate={(account) => { finance.updateAccount(account); notify("Счёт обновлён"); }} onDelete={(id) => { const previous = finance.state; finance.deleteAccount(id); notify("Счёт удалён", { label: "Отменить", onClick: () => finance.replaceAll(previous) }); }} />,
@@ -164,7 +175,7 @@ const App = () => {
 
   return (
     <>
-      <Layout activePage={activePage} setActivePage={setActivePage} user={auth.currentUser} onLogout={auth.logout} onQuickAdd={() => setQuickAddOpen(true)} amountsHidden={amountsHidden} onToggleAmountsHidden={toggleAmountsHidden} theme={theme.theme}>
+      <Layout activePage={activePage} setActivePage={setActivePage} user={auth.currentUser} onLogout={auth.logout} onQuickAdd={() => setQuickAddOpen(true)} amountsHidden={amountsHidden} onToggleAmountsHidden={toggleAmountsHidden} theme={theme.theme} alerts={getSmartAlerts(finance.state)}>
         <PageTransition key={activePage}>{page}</PageTransition>
       </Layout>
       <QuickAddModal
@@ -176,6 +187,7 @@ const App = () => {
         onAddGoal={finance.addGoal}
         accounts={finance.state.accounts}
         transactions={finance.state.transactions}
+        economyMode={economyMode}
         onNotify={notify}
       />
       <Toasts items={toasts} onDismiss={removeToast} />

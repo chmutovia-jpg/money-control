@@ -84,12 +84,9 @@ export const getDailySpendLimit = (state: FinanceState) => {
 export const getEndOfMonthForecast = (state: FinanceState) => {
   const month = currentMonth();
   const balance = getTotalAccountBalance(state);
-  const expectedIncome = sum(
-    state.transactions
-      .filter((item) => item.type === "income" && item.isRecurring)
-      .map((item) => item.amount),
-  );
-  const futurePayments = sum(getPaymentCalendar(state, getDaysLeftInMonth()).map((event) => event.amount));
+  const futureEvents = getPaymentCalendar(state, getDaysLeftInMonth());
+  const expectedIncome = sum(futureEvents.filter((event) => event.direction === "income").map((event) => event.amount));
+  const futurePayments = sum(futureEvents.filter((event) => event.direction === "expense").map((event) => event.amount));
   const expenseDays = new Set(
     state.transactions
       .filter((item) => item.type === "expense" && monthKey(item.date) === month)
@@ -192,6 +189,7 @@ export type PaymentEvent = {
   amount: number;
   date: string;
   type: "subscription" | "debt" | "recurring";
+  direction: "income" | "expense";
   category: string;
   daysLeft: number;
 };
@@ -209,17 +207,19 @@ export const getPaymentCalendar = (state: FinanceState, horizonDays = 30): Payme
       while (date < today) {
         date = item.period === "monthly" ? addMonths(date, 1) : addYears(date, 1);
       }
-      if (date <= horizon) {
+      while (date <= horizon) {
         const iso = date.toISOString().slice(0, 10);
         events.push({
-          id: `subscription-${item.id}`,
+          id: `subscription-${item.id}-${iso}`,
           title: item.name,
           amount: item.amount,
           date: iso,
           type: "subscription",
+          direction: "expense",
           category: item.category,
           daysLeft: daysBetween(todayISO(), iso),
         });
+        date = item.period === "monthly" ? addMonths(date, 1) : addYears(date, 1);
       }
     });
 
@@ -235,6 +235,7 @@ export const getPaymentCalendar = (state: FinanceState, horizonDays = 30): Payme
           amount: debt.amount,
           date,
           type: "debt",
+          direction: debt.type === "i_owe" ? "expense" : "income",
           category: debt.type === "i_owe" ? "долг" : "возврат",
           daysLeft,
         });
@@ -245,21 +246,25 @@ export const getPaymentCalendar = (state: FinanceState, horizonDays = 30): Payme
     .filter((item) => item.isRecurring)
     .forEach((item) => {
       let date = new Date(getNextRecurringDate(item));
-      if (date <= horizon) {
+      while (date <= horizon) {
         const iso = date.toISOString().slice(0, 10);
-        events.push({
-          id: `recurring-${item.id}`,
-          title: item.comment || item.category,
-          amount: item.amount,
-          date: iso,
-          type: "recurring",
-          category: item.category,
-          daysLeft: daysBetween(todayISO(), iso),
-        });
+        if (item.lastRunDate !== iso) {
+          events.push({
+            id: `recurring-${item.id}-${iso}`,
+            title: item.comment || item.category,
+            amount: item.amount,
+            date: iso,
+            type: "recurring",
+            direction: item.type,
+            category: item.category,
+            daysLeft: daysBetween(todayISO(), iso),
+          });
+        }
+        date = advanceRecurringDate(date, item.recurringFrequency);
       }
     });
 
-  return events.sort((a, b) => a.date.localeCompare(b.date));
+  return [...new Map(events.map((event) => [event.id, event])).values()].sort((a, b) => a.date.localeCompare(b.date));
 };
 
 export const getCashflowForecast = (state: FinanceState, horizonDays = getDaysLeftInMonth()) => {
@@ -274,7 +279,7 @@ export const getCashflowForecast = (state: FinanceState, horizonDays = getDaysLe
   return Array.from({ length: horizonDays }, (_, index) => {
     const date = addDays(new Date(todayISO()), index).toISOString().slice(0, 10);
     const events = paymentEvents.filter((event) => event.date === date);
-    const eventImpact = sum(events.map((event) => (event.category === "возврат" ? event.amount : -event.amount)));
+    const eventImpact = sum(events.map((event) => (event.direction === "income" ? event.amount : -event.amount)));
     balance = balance + eventImpact - averageDailyExpense;
     return {
       date,
@@ -307,7 +312,7 @@ export const getFinancialTemperature = (state: FinanceState) => {
   const overBudget = getBudgetProgress(state.budgets, state.transactions, month).some((budget) => budget.status === "over");
   const warningBudget = getBudgetProgress(state.budgets, state.transactions, month).some((budget) => budget.status === "warning");
   const debts = getActiveDebtTotal(state.debts);
-  const nearPayments = sum(getPaymentCalendar(state, 7).map((event) => event.amount));
+  const nearPayments = sum(getPaymentCalendar(state, 7).map((event) => (event.direction === "expense" ? event.amount : -event.amount)));
   const score = (daily.dailyLimit < 0 ? 2 : daily.dailyLimit < 1000 ? 1 : 0) + (overBudget ? 2 : warningBudget ? 1 : 0) + (debts > 0 ? 1 : 0) + (nearPayments > Math.max(1, daily.freeMoney) ? 1 : 0);
   if (score >= 3) return { status: "red" as const, title: "Риск перерасхода", advice: "Сократи необязательные траты и проверь ближайшие платежи." };
   if (score >= 1) return { status: "yellow" as const, title: "Осторожно", advice: "Держи дневной лимит и бюджеты под контролем." };
