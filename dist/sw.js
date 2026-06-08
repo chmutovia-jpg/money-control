@@ -1,5 +1,5 @@
-const CACHE_NAME = "money-control-v2";
-const ASSETS = ["./", "./manifest.json", "./icon-192.svg", "./icon-512.svg"];
+const CACHE_NAME = "money-control-v3";
+const ASSETS = ["./", "./manifest.json", "./icon.svg", "./favicon.svg", "./icon-192.svg", "./icon-512.svg", "./apple-touch-icon.png", "./maskable-icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));

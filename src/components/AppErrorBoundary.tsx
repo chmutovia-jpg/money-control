@@ -16,7 +16,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div className="app-shell flex min-h-screen items-center justify-center px-4 py-10 text-ink" data-theme="dark">
+      <div className="app-shell flex min-h-screen items-center justify-center px-4 py-10 text-ink" data-theme="midnight-finance">
         <div className="glass-panel w-full max-w-md rounded-5xl p-6 text-center">
           <h1 className="text-2xl font-bold text-ink">Money Control</h1>
           <p className="mt-3 text-sm text-muted">

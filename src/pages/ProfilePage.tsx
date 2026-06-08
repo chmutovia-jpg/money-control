@@ -4,8 +4,9 @@ import { Card, SectionHeader } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
 import { themeOptions, type AppTheme } from "../hooks/useTheme";
 import type { FinanceState, Transaction, User } from "../types";
-import { formatDate } from "../utils/format";
+import { MONEY_HIDDEN_KEY, formatDate } from "../utils/format";
 import { filterDuplicateTransactions, findDuplicateTransactions } from "../utils/imports";
+import { safeGetItem, safeSetItem } from "../utils/storage";
 
 interface ProfilePageProps {
   user: User;
@@ -30,10 +31,18 @@ const downloadFile = (filename: string, content: string, type: string) => {
 };
 
 const csvValue = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+const QUICK_TEMPLATES_KEY = "money-control-quick-templates";
+
+type ImportableState = Partial<FinanceState> & {
+  customQuickAddTemplates?: unknown;
+  privacy?: {
+    hideAmounts?: boolean;
+  };
+};
 
 const transactionsToCsv = (state: FinanceState) => {
   const rows = [
-    ["id", "type", "amount", "category", "date", "comment", "isRecurring", "accountId"],
+    ["id", "type", "amount", "category", "date", "comment", "isRecurring", "recurringFrequency", "nextRunDate", "lastRunDate", "accountId"],
     ...state.transactions.map((item) => [
       item.id,
       item.type,
@@ -42,6 +51,9 @@ const transactionsToCsv = (state: FinanceState) => {
       item.date,
       item.comment ?? "",
       item.isRecurring ? "yes" : "no",
+      item.recurringFrequency ?? "",
+      item.nextRunDate ?? "",
+      item.lastRunDate ?? "",
       item.accountId ?? "",
     ]),
   ];
@@ -54,8 +66,11 @@ const parseCsvLine = (line: string) =>
 const csvToTransactions = (content: string): Transaction[] => {
   const [, ...lines] = content.trim().split(/\r?\n/);
   return lines.map((line, index) => {
-    const [id, type, amount, category, date, comment, isRecurring, accountId] = parseCsvLine(line);
+    const [id, type, amount, category, date, comment, isRecurring, recurringFrequency, nextRunDate, lastRunDate, accountId] = parseCsvLine(line);
     const transactionType: Transaction["type"] = type === "income" ? "income" : "expense";
+    const isFrequency = recurringFrequency === "daily" || recurringFrequency === "weekly" || recurringFrequency === "monthly" || recurringFrequency === "yearly";
+    const actualFrequency: Transaction["recurringFrequency"] = isFrequency ? recurringFrequency : undefined;
+    const actualAccountId = accountId || (!isFrequency ? recurringFrequency : undefined);
     return {
       id: id || `csv-${index}`,
       type: transactionType,
@@ -64,7 +79,10 @@ const csvToTransactions = (content: string): Transaction[] => {
       date,
       comment: comment || undefined,
       isRecurring: isRecurring === "yes",
-      accountId: accountId || undefined,
+      recurringFrequency: actualFrequency,
+      nextRunDate: isFrequency ? nextRunDate || undefined : undefined,
+      lastRunDate: isFrequency ? lastRunDate || undefined : undefined,
+      accountId: actualAccountId,
     };
   }).filter((item) => item.date && item.amount > 0);
 };
@@ -76,7 +94,7 @@ const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => {
         currency: "RUB" as const,
         color: account.color ?? ["#60a5fa", "#34d399", "#a78bfa", "#fb7185"][index % 4],
       }))
-    : [{ id: "main", name: "Основной", type: "card" as const, balance: 0, currency: "RUB" as const, color: "#60a5fa" }];
+    : [{ id: "main", name: "Основной счёт", type: "card" as const, balance: 0, currency: "RUB" as const, color: "#60a5fa" }];
   const fallbackAccountId = accounts[0].id;
   return {
   transactions: (state.transactions ?? []).map((item) => ({ ...item, accountId: item.accountId ?? fallbackAccountId })),
@@ -177,9 +195,17 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
 
   const exportJson = (backup = false) => {
     const stamp = new Date().toISOString().slice(0, 10);
+    const customQuickAddTemplates = JSON.parse(safeGetItem(QUICK_TEMPLATES_KEY) ?? "[]") as unknown;
+    const exportPayload = {
+      ...financeState,
+      customQuickAddTemplates,
+      privacy: {
+        hideAmounts: safeGetItem(MONEY_HIDDEN_KEY) === "true",
+      },
+    };
     downloadFile(
       backup ? `money-control-backup-${stamp}.json` : `money-control-data-${stamp}.json`,
-      JSON.stringify(financeState, null, 2),
+      JSON.stringify(exportPayload, null, 2),
       "application/json",
     );
   };
@@ -197,7 +223,9 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
         const content = String(reader.result);
         const isCsv = file.name.toLowerCase().endsWith(".csv");
         const incomingTransactions = isCsv ? csvToTransactions(content) : undefined;
-        const parsed = isCsv ? { ...financeState, transactions: [...incomingTransactions!, ...financeState.transactions] } : JSON.parse(content) as Partial<FinanceState>;
+        const parsed = isCsv ? { ...financeState, transactions: [...incomingTransactions!, ...financeState.transactions] } : JSON.parse(content) as ImportableState;
+        if (!isCsv && parsed.customQuickAddTemplates) safeSetItem(QUICK_TEMPLATES_KEY, JSON.stringify(parsed.customQuickAddTemplates));
+        if (!isCsv && typeof parsed.privacy?.hideAmounts === "boolean") safeSetItem(MONEY_HIDDEN_KEY, String(parsed.privacy.hideAmounts));
         const nextState = normalizeImportedState(parsed);
         const duplicates = findDuplicateTransactions(financeState.transactions, incomingTransactions ?? nextState.transactions);
         if (duplicates.length) {

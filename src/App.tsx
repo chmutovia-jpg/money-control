@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Lock } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
+import { AppSplash } from "./components/AppSplash";
 import { Layout } from "./components/Layout";
 import { QuickAddModal } from "./components/QuickAddModal";
 import { Toasts, type ToastItem } from "./components/Toasts";
@@ -35,10 +35,16 @@ const App = () => {
   const [locked, setLocked] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [splashVisible, setSplashVisible] = useState(true);
   const reduced = useReducedMotion();
   const auth = useAuth();
   const theme = useTheme();
   const finance = useFinanceData(auth.currentUser?.id ?? null);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setSplashVisible(false), reduced ? 220 : 650);
+    return () => window.clearTimeout(timeout);
+  }, [reduced]);
 
   useEffect(() => {
     setLocked(Boolean(auth.currentUser?.pin));
@@ -76,17 +82,25 @@ const App = () => {
   };
 
   if (!auth.currentUser) {
-    return <AuthPage theme={theme.theme} error={auth.error} onLogin={auth.login} onRegister={auth.register} onLoginWithPin={auth.loginWithPin} onDemoLogin={auth.demoLogin} onClearError={auth.clearError} />;
+    return (
+      <>
+        <AuthPage theme={theme.theme} error={auth.error} onLogin={auth.login} onRegister={auth.register} onLoginWithPin={auth.loginWithPin} onDemoLogin={auth.demoLogin} onClearError={auth.clearError} />
+        <AppSplash visible={splashVisible} theme={theme.theme} />
+      </>
+    );
   }
 
   if (!auth.currentUser.onboardingCompleted) {
     return (
-      <OnboardingPage
-        onFinish={(nextState) => {
-          finance.replaceAll(nextState);
-          auth.completeOnboarding();
-        }}
-      />
+      <>
+        <OnboardingPage
+          onFinish={(nextState) => {
+            finance.replaceAll(nextState);
+            auth.completeOnboarding();
+          }}
+        />
+        <AppSplash visible={splashVisible} theme={theme.theme} />
+      </>
     );
   }
 
@@ -110,7 +124,7 @@ const App = () => {
             }
           }}
         >
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-400/10 text-blue-200 shadow-[0_0_34px_rgba(96,165,250,0.22)]"><Lock size={28} /></div>
+          <img className="mx-auto mb-4 h-20 w-20 rounded-[24px] shadow-[0_0_42px_rgba(96,165,250,0.24)]" src="./icon.svg" alt="Money Control" />
           <h1 className="text-2xl font-bold">Money Control закрыт</h1>
           <p className="mt-2 text-sm text-muted">Введите локальный PIN, чтобы открыть приложение.</p>
           <div className="mt-5 flex justify-center gap-2">
@@ -127,6 +141,7 @@ const App = () => {
           <button className={`${buttonClass} mt-4 w-full`} type="submit">Разблокировать</button>
           <Toasts items={toasts} onDismiss={removeToast} />
         </motion.form>
+        <AppSplash visible={splashVisible} theme={theme.theme} />
       </div>
     );
   }
@@ -164,6 +179,7 @@ const App = () => {
         onNotify={notify}
       />
       <Toasts items={toasts} onDismiss={removeToast} />
+      <AppSplash visible={splashVisible} theme={theme.theme} />
     </>
   );
 };
