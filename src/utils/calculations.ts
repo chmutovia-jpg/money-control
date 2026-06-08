@@ -154,6 +154,38 @@ const addYears = (date: Date, years: number) => {
   return next;
 };
 
+const addDays = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const advanceRecurringDate = (date: Date, frequency: Transaction["recurringFrequency"] = "monthly") => {
+  if (frequency === "daily") return addDays(date, 1);
+  if (frequency === "weekly") return addDays(date, 7);
+  if (frequency === "yearly") return addYears(date, 1);
+  return addMonths(date, 1);
+};
+
+export const getNextRecurringDate = (transaction: Transaction, fromDate = todayISO()) => {
+  let date = new Date(transaction.nextRunDate || transaction.date);
+  const today = new Date(fromDate);
+  while (date < today) date = advanceRecurringDate(date, transaction.recurringFrequency);
+  return date.toISOString().slice(0, 10);
+};
+
+export const getDueRecurringTransactions = (transactions: Transaction[], date = todayISO()) =>
+  transactions.filter((item) => item.isRecurring && getNextRecurringDate(item, date) <= date && item.lastRunDate !== date);
+
+export const makeRecurringOccurrence = (transaction: Transaction, date = todayISO()): Omit<Transaction, "id"> => ({
+  type: transaction.type,
+  amount: transaction.amount,
+  category: transaction.category,
+  date,
+  comment: transaction.comment,
+  accountId: transaction.accountId,
+});
+
 export type PaymentEvent = {
   id: string;
   title: string;
@@ -212,8 +244,7 @@ export const getPaymentCalendar = (state: FinanceState, horizonDays = 30): Payme
   state.transactions
     .filter((item) => item.isRecurring)
     .forEach((item) => {
-      let date = new Date(item.date);
-      while (date < today) date = addMonths(date, 1);
+      let date = new Date(getNextRecurringDate(item));
       if (date <= horizon) {
         const iso = date.toISOString().slice(0, 10);
         events.push({
@@ -229,6 +260,58 @@ export const getPaymentCalendar = (state: FinanceState, horizonDays = 30): Payme
     });
 
   return events.sort((a, b) => a.date.localeCompare(b.date));
+};
+
+export const getCashflowForecast = (state: FinanceState, horizonDays = getDaysLeftInMonth()) => {
+  const startBalance = getTotalAccountBalance(state);
+  const month = currentMonth();
+  const spent = getTotalByType(state.transactions, "expense", month);
+  const daysPassed = new Date().getDate();
+  const averageDailyExpense = spent / Math.max(1, daysPassed);
+  const paymentEvents = getPaymentCalendar(state, horizonDays);
+  let balance = startBalance;
+
+  return Array.from({ length: horizonDays }, (_, index) => {
+    const date = addDays(new Date(todayISO()), index).toISOString().slice(0, 10);
+    const events = paymentEvents.filter((event) => event.date === date);
+    const eventImpact = sum(events.map((event) => (event.category === "возврат" ? event.amount : -event.amount)));
+    balance = balance + eventImpact - averageDailyExpense;
+    return {
+      date,
+      balance,
+      events,
+      isLow: balance < averageDailyExpense * 3,
+    };
+  });
+};
+
+export const getPurchaseStressTest = (state: FinanceState, purchaseAmount: number) => {
+  const daily = getDailySpendLimit(state);
+  const forecast = getEndOfMonthForecast(state);
+  const daysLeft = daily.daysLeft;
+  const newDailyLimit = (daily.freeMoney - purchaseAmount) / Math.max(1, daysLeft);
+  const newForecast = forecast.forecast - purchaseAmount;
+  const goals = getGoalsProgress(state.goals);
+  const goalImpactPercent = goals.target ? Math.min(100, Math.round((purchaseAmount / goals.target) * 100)) : 0;
+  return {
+    newDailyLimit,
+    newForecast,
+    goalImpactPercent,
+    isRisky: newDailyLimit < 0 || newForecast < 0 || purchaseAmount > Math.max(1, daily.freeMoney) * 0.4,
+  };
+};
+
+export const getFinancialTemperature = (state: FinanceState) => {
+  const daily = getDailySpendLimit(state);
+  const month = currentMonth();
+  const overBudget = getBudgetProgress(state.budgets, state.transactions, month).some((budget) => budget.status === "over");
+  const warningBudget = getBudgetProgress(state.budgets, state.transactions, month).some((budget) => budget.status === "warning");
+  const debts = getActiveDebtTotal(state.debts);
+  const nearPayments = sum(getPaymentCalendar(state, 7).map((event) => event.amount));
+  const score = (daily.dailyLimit < 0 ? 2 : daily.dailyLimit < 1000 ? 1 : 0) + (overBudget ? 2 : warningBudget ? 1 : 0) + (debts > 0 ? 1 : 0) + (nearPayments > Math.max(1, daily.freeMoney) ? 1 : 0);
+  if (score >= 3) return { status: "red" as const, title: "Риск перерасхода", advice: "Сократи необязательные траты и проверь ближайшие платежи." };
+  if (score >= 1) return { status: "yellow" as const, title: "Осторожно", advice: "Держи дневной лимит и бюджеты под контролем." };
+  return { status: "green" as const, title: "Спокойно", advice: "Бюджет выглядит устойчиво, можно продолжать в том же темпе." };
 };
 
 export const getInsights = (state: FinanceState) => {

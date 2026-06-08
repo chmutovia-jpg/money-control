@@ -2,6 +2,7 @@ import { Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
 import type { Account, Debt, SavingGoal, Subscription, Transaction } from "../types";
+import { parseQuickExpense } from "../utils/categoryRules";
 import { todayISO } from "../utils/format";
 import { safeGetItem, safeSetItem } from "../utils/storage";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "./FormControls";
@@ -97,16 +98,12 @@ export const QuickAddModal = ({
   };
 
   const submitQuickText = () => {
-    const match = quickText.trim().match(/^(.+?)\s+(\d+(?:[.,]\d+)?)$/);
-    if (!match) {
+    const parsed = parseQuickExpense(quickText);
+    if (!parsed) {
       onNotify("Напиши в формате: кофе 250");
       return;
     }
-    const label = match[1].trim();
-    const amount = Number(match[2].replace(",", "."));
-    if (amount <= 0) return;
-    const category = /кофе|кафе|еда|продукт/i.test(label) ? "еда" : /такси|метро|транспорт/i.test(label) ? "транспорт" : /аптек|лекар/i.test(label) ? "здоровье" : "другое";
-    onAddTransaction({ type: "expense", amount, category, date: todayISO(), comment: label, accountId: form.accountId || accounts[0]?.id });
+    onAddTransaction({ type: "expense", amount: parsed.amount, category: parsed.category, date: todayISO(), comment: parsed.label, accountId: form.accountId || accounts[0]?.id });
     setQuickText("");
     onNotify("Расход добавлен");
     onClose();

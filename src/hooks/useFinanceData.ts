@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Account, CategoryBudget, Debt, FinanceState, SavingGoal, Subscription, Transaction } from "../types";
+import { getDueRecurringTransactions, getNextRecurringDate, makeRecurringOccurrence } from "../utils/calculations";
 import { demoData } from "../utils/demoData";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "../utils/storage";
 
@@ -170,6 +171,23 @@ export const useFinanceData = (userId: string | null) => {
             ...current,
             accounts: nextAccounts.length ? nextAccounts : [defaultAccount],
             transactions: current.transactions.map((item) => (item.accountId === id ? { ...item, accountId: fallback } : item)),
+          };
+        }),
+      applyDueRecurring: () =>
+        setState((current) => {
+          const due = getDueRecurringTransactions(current.transactions);
+          if (!due.length) return current;
+          const occurrences = due.map((item) => ({ ...makeRecurringOccurrence(item), id: createId() }));
+          return {
+            ...current,
+            transactions: [
+              ...occurrences,
+              ...current.transactions.map((item) =>
+                due.some((dueItem) => dueItem.id === item.id)
+                  ? { ...item, lastRunDate: item.nextRunDate ?? item.date, nextRunDate: getNextRecurringDate({ ...item, nextRunDate: item.nextRunDate ?? item.date }, new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)) }
+                  : item,
+              ),
+            ],
           };
         }),
       replaceAll: (nextState: FinanceState) => setState(normalizeState(nextState)),

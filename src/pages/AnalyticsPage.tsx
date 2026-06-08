@@ -21,6 +21,21 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
   const daysPassed = new Date().getDate();
   const averageDailyExpense = expenses / Math.max(1, daysPassed);
   const subscriptions = getMonthlySubscriptionsTotal(state.subscriptions);
+  const previousMonthDate = new Date(`${month}-01`);
+  previousMonthDate.setMonth(previousMonthDate.getMonth() - 1);
+  const previousMonth = previousMonthDate.toISOString().slice(0, 7);
+  const previousIncome = getTotalByType(state.transactions, "income", previousMonth);
+  const previousExpenses = getTotalByType(state.transactions, "expense", previousMonth);
+  const previousCategories = getExpensesByCategory(state.transactions, previousMonth);
+  const categoryChanges = categories
+    .map((category) => ({ ...category, previous: previousCategories.find((item) => item.name === category.name)?.value ?? 0 }))
+    .map((category) => ({ name: category.name, diff: category.value - category.previous }))
+    .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+  const comparisonInsights = [
+    expenses > previousExpenses ? `Расходы выше прошлого месяца на ${formatCurrency(expenses - previousExpenses)}.` : `Расходы ниже прошлого месяца на ${formatCurrency(previousExpenses - expenses)}.`,
+    income > previousIncome ? `Доходы выросли на ${formatCurrency(income - previousIncome)}.` : `Доходы снизились на ${formatCurrency(previousIncome - income)}.`,
+    categoryChanges[0] ? `Самое заметное изменение: ${categoryChanges[0].name}, ${categoryChanges[0].diff > 0 ? "рост" : "снижение"} ${formatCurrency(Math.abs(categoryChanges[0].diff))}.` : "Пока недостаточно категорий для сравнения.",
+  ];
   const monthTips = [
     biggestCategory ? `Поставь лимит на категорию “${biggestCategory.name}” на 10-15% ниже текущих расходов.` : "Добавь первые расходы, чтобы советы стали точнее.",
     subscriptions > 0 ? `Проверь подписки: сейчас они занимают ${Math.round((subscriptions / Math.max(1, expenses)) * 100)}% расходов месяца.` : "Добавь подписки, чтобы видеть их влияние на бюджет.",
@@ -56,6 +71,25 @@ export const AnalyticsPage = ({ state }: { state: FinanceState }) => {
           {monthly.length ? <div className="h-64 sm:h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.16)" /><XAxis dataKey="month" /><YAxis tickFormatter={(value) => `${Math.round(Number(value) / 1000)}к`} /><Tooltip formatter={(value) => formatCurrency(Number(value))} /><Bar dataKey="доходы" fill="#34d399" radius={[10, 10, 0, 0]} isAnimationActive animationBegin={60} animationDuration={650} /><Bar dataKey="расходы" fill="#fb7185" radius={[10, 10, 0, 0]} isAnimationActive animationBegin={120} animationDuration={650} /></BarChart></ResponsiveContainer></div> : <EmptyState title="Нет данных" text="История появится после первых операций." />}
         </Card>
       </div>
+      <Card className="mt-5">
+        <SectionHeader title="Сравнение с прошлым месяцем" />
+        <div className="grid gap-3 md:grid-cols-3">
+          <Metric label="Расходы vs прошлый месяц" value={`${expenses >= previousExpenses ? "+" : "-"}${formatCurrency(Math.abs(expenses - previousExpenses))}`} tone={expenses > previousExpenses ? "text-rose-300" : "text-emerald-300"} />
+          <Metric label="Доходы vs прошлый месяц" value={`${income >= previousIncome ? "+" : "-"}${formatCurrency(Math.abs(income - previousIncome))}`} tone={income >= previousIncome ? "text-emerald-300" : "text-rose-300"} />
+          <Metric label="Средний расход в день" value={formatCurrency(Math.round(averageDailyExpense))} />
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-3xl bg-slate-50 p-4">
+            <p className="font-bold text-ink">Самый большой рост</p>
+            {categoryChanges.filter((item) => item.diff > 0).slice(0, 3).map((item) => <p key={item.name} className="mt-2 text-sm text-muted">{item.name}: +{formatCurrency(item.diff)}</p>)}
+          </div>
+          <div className="rounded-3xl bg-slate-50 p-4">
+            <p className="font-bold text-ink">Самое большое снижение</p>
+            {categoryChanges.filter((item) => item.diff < 0).slice(0, 3).map((item) => <p key={item.name} className="mt-2 text-sm text-muted">{item.name}: -{formatCurrency(Math.abs(item.diff))}</p>)}
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">{comparisonInsights.map((text) => <div key={text} className="rounded-3xl border border-white/10 bg-white/10 p-4 text-sm font-medium text-ink">{text}</div>)}</div>
+      </Card>
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>
           <SectionHeader title="Топ-5 категорий" />

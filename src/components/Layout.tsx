@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, CreditCard, Gauge, Home, LogOut, PiggyBank, Plus, Receipt, Repeat, Target, TrendingUp, UserCircle, WalletCards } from "lucide-react";
+import { BarChart3, CalendarDays, CreditCard, Eye, EyeOff, Gauge, Home, LogOut, PiggyBank, Plus, Receipt, Repeat, Target, TrendingUp, UserCircle, WalletCards } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { PageKey } from "../App";
@@ -32,6 +32,8 @@ export const Layout = ({
   user,
   onLogout,
   onQuickAdd,
+  amountsHidden,
+  onToggleAmountsHidden,
   theme,
   children,
 }: {
@@ -40,6 +42,8 @@ export const Layout = ({
   user: User;
   onLogout: () => void;
   onQuickAdd: () => void;
+  amountsHidden: boolean;
+  onToggleAmountsHidden: () => void;
   theme: AppTheme;
   children: React.ReactNode;
 }) => {
@@ -73,6 +77,10 @@ export const Layout = ({
         ))}
       </nav>
       <div className="mt-4 shrink-0">
+        <button type="button" onClick={onToggleAmountsHidden} className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-semibold text-muted transition hover:bg-white/15">
+          {amountsHidden ? <Eye size={17} /> : <EyeOff size={17} />}
+          {amountsHidden ? "Показать суммы" : "Скрыть суммы"}
+        </button>
         <button
           type="button"
           onClick={() => setActivePage("profile")}
@@ -104,9 +112,14 @@ export const Layout = ({
             <p className="text-xs text-muted">MVP бюджет</p>
           </div>
         </div>
-        <button type="button" onClick={() => setActivePage("profile")} className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/10">
-          {user.avatar ? <img src={user.avatar} alt="Аватар" className="h-full w-full object-cover" /> : <UserCircle size={23} className="text-muted" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={onToggleAmountsHidden} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-muted">
+            {amountsHidden ? <Eye size={20} /> : <EyeOff size={20} />}
+          </button>
+          <button type="button" onClick={() => setActivePage("profile")} className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/10">
+            {user.avatar ? <img src={user.avatar} alt="Аватар" className="h-full w-full object-cover" /> : <UserCircle size={23} className="text-muted" />}
+          </button>
+        </div>
       </div>
       {children}
     </main>

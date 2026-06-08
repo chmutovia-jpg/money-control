@@ -8,6 +8,9 @@ export interface Transaction {
   date: string;
   comment?: string;
   isRecurring?: boolean;
+  recurringFrequency?: "daily" | "weekly" | "monthly" | "yearly";
+  nextRunDate?: string;
+  lastRunDate?: string;
   accountId?: string;
 }
 

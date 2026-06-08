@@ -1,5 +1,16 @@
+export const MONEY_HIDDEN_KEY = "money-control-hide-amounts";
+
+export const areAmountsHidden = () =>
+  typeof window !== "undefined" && window.localStorage.getItem(MONEY_HIDDEN_KEY) === "true";
+
+export const setAmountsHidden = (hidden: boolean) => {
+  if (typeof window !== "undefined") window.localStorage.setItem(MONEY_HIDDEN_KEY, String(hidden));
+};
+
 export const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("ru-RU", {
+  areAmountsHidden()
+    ? "••• ₽"
+    : new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
     maximumFractionDigits: 0,

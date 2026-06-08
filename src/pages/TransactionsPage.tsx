@@ -15,6 +15,8 @@ const emptyForm = (type: Transaction["type"]) => ({
   date: todayISO(),
   comment: "",
   isRecurring: false,
+  recurringFrequency: "monthly" as NonNullable<Transaction["recurringFrequency"]>,
+  nextRunDate: todayISO(),
   accountId: "",
 });
 
@@ -49,6 +51,8 @@ export const TransactionsPage = ({ type, transactions, onAdd, onUpdate, onDelete
       date: form.date,
       comment: form.comment.trim() || undefined,
       isRecurring: form.isRecurring,
+      recurringFrequency: form.isRecurring ? form.recurringFrequency : undefined,
+      nextRunDate: form.isRecurring ? form.nextRunDate : undefined,
       accountId: form.accountId || accounts[0]?.id,
     };
     if (!payload.amount || payload.amount < 0) return;
@@ -66,6 +70,8 @@ export const TransactionsPage = ({ type, transactions, onAdd, onUpdate, onDelete
       date: transaction.date,
       comment: transaction.comment ?? "",
       isRecurring: Boolean(transaction.isRecurring),
+      recurringFrequency: transaction.recurringFrequency ?? "monthly",
+      nextRunDate: transaction.nextRunDate ?? transaction.date,
       accountId: transaction.accountId ?? accounts[0]?.id ?? "",
     });
   };
@@ -102,8 +108,23 @@ export const TransactionsPage = ({ type, transactions, onAdd, onUpdate, onDelete
             </Field>
             <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 text-sm font-semibold text-ink">
               <input type="checkbox" checked={form.isRecurring} onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })} />
-              Повторяется ежемесячно
+              Регулярная операция
             </label>
+            {form.isRecurring ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Частота">
+                  <select className={inputClass} value={form.recurringFrequency} onChange={(e) => setForm({ ...form, recurringFrequency: e.target.value as NonNullable<Transaction["recurringFrequency"]> })}>
+                    <option value="daily">ежедневно</option>
+                    <option value="weekly">еженедельно</option>
+                    <option value="monthly">ежемесячно</option>
+                    <option value="yearly">ежегодно</option>
+                  </select>
+                </Field>
+                <Field label="Следующий запуск">
+                  <input className={inputClass} type="date" value={form.nextRunDate} onChange={(e) => setForm({ ...form, nextRunDate: e.target.value })} />
+                </Field>
+              </div>
+            ) : null}
             <div className="flex gap-2">
               <button className={buttonClass} type="submit"><Plus size={18} />{editingId ? "Сохранить" : "Добавить"}</button>
               {editingId ? <button className={ghostButtonClass} type="button" onClick={reset}><X size={18} />Отмена</button> : null}

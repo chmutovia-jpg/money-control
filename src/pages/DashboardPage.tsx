@@ -1,16 +1,18 @@
 import { BarChart3, CreditCard, Lightbulb, PiggyBank, Repeat, Target, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, EmptyState, SectionHeader } from "../components/Card";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
 import { AnimatedNumber } from "../components/motion";
 import type { FinanceState } from "../types";
-import { currentMonth, getAccountsWithBalance, getActiveDebtTotal, getBudgetProgress, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getPaymentCalendar, getTotalAccountBalance, getTotalByType } from "../utils/calculations";
+import { currentMonth, getAccountsWithBalance, getActiveDebtTotal, getBudgetProgress, getDailySpendLimit, getEndOfMonthForecast, getExpensesByCategory, getFinancialTemperature, getGoalsProgress, getInsights, getMonthlySubscriptionsTotal, getPaymentCalendar, getPurchaseStressTest, getTotalAccountBalance, getTotalByType } from "../utils/calculations";
 import { formatCurrency, formatDate } from "../utils/format";
 
 const colors = ["#60a5fa", "#34d399", "#fb7185", "#a5b4fc", "#2dd4bf", "#fbbf24", "#94a3b8"];
 
 export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: FinanceState; onReset: () => void; onRestoreDemo: () => void }) => {
+  const [stressAmount, setStressAmount] = useState("");
   const month = currentMonth();
   const income = getTotalByType(state.transactions, "income", month);
   const expenses = getTotalByType(state.transactions, "expense", month);
@@ -31,6 +33,13 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
   const latest = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
   const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   const daysLeft = daysInMonth - new Date().getDate();
+  const temperature = getFinancialTemperature(state);
+  const stress = getPurchaseStressTest(state, Number(stressAmount) || 0);
+  const temperatureClasses = {
+    green: "border-emerald-300/25 bg-emerald-400/10 text-emerald-100",
+    yellow: "border-amber-300/25 bg-amber-400/10 text-amber-100",
+    red: "border-rose-300/25 bg-rose-400/10 text-rose-100",
+  };
 
   return (
     <div>
@@ -64,6 +73,26 @@ export const DashboardPage = ({ state, onReset, onRestoreDemo }: { state: Financ
           </div>
         </div>
       </section>
+
+      <div className="mb-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+        <Card className={`border ${temperatureClasses[temperature.status]}`}>
+          <SectionHeader title="Финансовая температура" />
+          <p className="text-3xl font-bold">{temperature.title}</p>
+          <p className="mt-2 text-sm">{temperature.advice}</p>
+        </Card>
+        <Card>
+          <SectionHeader title="А что если?" />
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <input className="rounded-2xl border border-white/10 bg-slate-50 px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-blue-300/40" type="number" min="0" value={stressAmount} onChange={(e) => setStressAmount(e.target.value)} placeholder="Сумма покупки" />
+            <div className={`rounded-2xl px-4 py-3 text-sm font-bold ${stress.isRisky ? "bg-rose-400/10 text-rose-200" : "bg-emerald-400/10 text-emerald-200"}`}>{stress.isRisky ? "Рискованно" : "Допустимо"}</div>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Новый дневной лимит</p><p className="font-bold">{formatCurrency(stress.newDailyLimit)}</p></div>
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Прогноз месяца</p><p className="font-bold">{formatCurrency(stress.newForecast)}</p></div>
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Влияние на цели</p><p className="font-bold">{stress.goalImpactPercent}%</p></div>
+          </div>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Общий баланс" value={formatCurrency(balance)} numericValue={balance} icon={Wallet} tone="blue" delay={0.04} />

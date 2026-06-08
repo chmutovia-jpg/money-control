@@ -3,8 +3,9 @@ import { useRef, useState } from "react";
 import { Card, SectionHeader } from "../components/Card";
 import { Field, buttonClass, ghostButtonClass, inputClass } from "../components/FormControls";
 import type { AppTheme } from "../hooks/useTheme";
-import type { FinanceState, User } from "../types";
+import type { FinanceState, Transaction, User } from "../types";
 import { formatDate } from "../utils/format";
+import { filterDuplicateTransactions, findDuplicateTransactions } from "../utils/imports";
 
 interface ProfilePageProps {
   user: User;
@@ -47,6 +48,27 @@ const transactionsToCsv = (state: FinanceState) => {
   return rows.map((row) => row.map(csvValue).join(",")).join("\n");
 };
 
+const parseCsvLine = (line: string) =>
+  line.match(/("([^"]|"")*"|[^,]+)/g)?.map((value) => value.replace(/^"|"$/g, "").replaceAll('""', '"')) ?? [];
+
+const csvToTransactions = (content: string): Transaction[] => {
+  const [, ...lines] = content.trim().split(/\r?\n/);
+  return lines.map((line, index) => {
+    const [id, type, amount, category, date, comment, isRecurring, accountId] = parseCsvLine(line);
+    const transactionType: Transaction["type"] = type === "income" ? "income" : "expense";
+    return {
+      id: id || `csv-${index}`,
+      type: transactionType,
+      amount: Number(amount) || 0,
+      category: category || "другое",
+      date,
+      comment: comment || undefined,
+      isRecurring: isRecurring === "yes",
+      accountId: accountId || undefined,
+    };
+  }).filter((item) => item.date && item.amount > 0);
+};
+
 const normalizeImportedState = (state: Partial<FinanceState>): FinanceState => {
   const accounts = state.accounts?.length
     ? state.accounts.map((account, index) => ({
@@ -71,6 +93,10 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
   const [avatar, setAvatar] = useState(user.avatar);
   const [saved, setSaved] = useState(false);
   const [importStatus, setImportStatus] = useState("");
+  const [pendingImport, setPendingImport] = useState<FinanceState | null>(null);
+  const [pendingSkipImport, setPendingSkipImport] = useState<FinanceState | null>(null);
+  const [duplicateCount, setDuplicateCount] = useState(0);
+  const [reviewDuplicates, setReviewDuplicates] = useState(false);
   const [avatarStatus, setAvatarStatus] = useState("");
   const [pin, setPin] = useState("");
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -168,15 +194,43 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(String(reader.result)) as Partial<FinanceState>;
-        onImportData(normalizeImportedState(parsed));
-        setImportStatus("Данные импортированы.");
+        const content = String(reader.result);
+        const isCsv = file.name.toLowerCase().endsWith(".csv");
+        const incomingTransactions = isCsv ? csvToTransactions(content) : undefined;
+        const parsed = isCsv ? { ...financeState, transactions: [...incomingTransactions!, ...financeState.transactions] } : JSON.parse(content) as Partial<FinanceState>;
+        const nextState = normalizeImportedState(parsed);
+        const duplicates = findDuplicateTransactions(financeState.transactions, incomingTransactions ?? nextState.transactions);
+        if (duplicates.length) {
+          setPendingImport(nextState);
+          setPendingSkipImport(isCsv
+            ? { ...financeState, transactions: [...filterDuplicateTransactions(financeState.transactions, incomingTransactions!), ...financeState.transactions] }
+            : { ...nextState, transactions: filterDuplicateTransactions(financeState.transactions, nextState.transactions) });
+          setDuplicateCount(duplicates.length);
+          setReviewDuplicates(false);
+          setImportStatus(`Найдено ${duplicates.length} возможных дублей.`);
+        } else {
+          onImportData(nextState);
+          setImportStatus("Данные импортированы.");
+        }
       } catch {
-        setImportStatus("Не удалось импортировать JSON.");
+        setImportStatus("Не удалось импортировать файл.");
       }
       if (importInputRef.current) importInputRef.current.value = "";
     };
     reader.readAsText(file);
+  };
+
+  const importPending = (skipDuplicates: boolean) => {
+    if (!pendingImport) return;
+    const nextState = skipDuplicates
+      ? pendingSkipImport ?? { ...pendingImport, transactions: filterDuplicateTransactions(financeState.transactions, pendingImport.transactions) }
+      : pendingImport;
+    onImportData(nextState);
+    setPendingImport(null);
+    setPendingSkipImport(null);
+    setDuplicateCount(0);
+    setReviewDuplicates(false);
+    setImportStatus(skipDuplicates ? "Импортировано без возможных дублей." : "Импортировано всё.");
   };
 
   return (
@@ -275,11 +329,28 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
             </button>
             <button className={ghostButtonClass} type="button" onClick={() => importInputRef.current?.click()}>
               <Upload size={18} />
-              Импорт JSON
+              Импорт JSON/CSV
             </button>
           </div>
-          <input ref={importInputRef} className="sr-only" type="file" accept="application/json,.json" onChange={(e) => importJson(e.target.files?.[0])} />
+          <input ref={importInputRef} className="sr-only" type="file" accept="application/json,.json,text/csv,.csv" onChange={(e) => importJson(e.target.files?.[0])} />
           {importStatus ? <div className="mt-4 rounded-2xl border border-white/10 bg-slate-50 px-4 py-3 text-sm font-medium text-ink">{importStatus}</div> : null}
+          {pendingImport ? (
+            <div className="mt-4 space-y-3 rounded-3xl border border-amber-300/20 bg-amber-400/10 p-4">
+              <p className="text-sm font-semibold text-amber-100">Найдено {duplicateCount} возможных дублей.</p>
+              <div className="flex flex-wrap gap-2">
+                <button className={ghostButtonClass} type="button" onClick={() => importPending(false)}>Импортировать всё</button>
+                <button className={ghostButtonClass} type="button" onClick={() => importPending(true)}>Пропустить дубли</button>
+                <button className={ghostButtonClass} type="button" onClick={() => setReviewDuplicates((value) => !value)}>Проверить вручную</button>
+              </div>
+              {reviewDuplicates ? (
+                <div className="max-h-52 space-y-2 overflow-y-auto">
+                  {findDuplicateTransactions(financeState.transactions, pendingImport.transactions).slice(0, 12).map((item) => (
+                    <div key={item.id} className="rounded-2xl bg-slate-50 p-3 text-xs text-ink">{item.date} • {item.type} • {item.amount} ₽ • {item.comment || item.category}</div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </Card>
 
         <Card>
