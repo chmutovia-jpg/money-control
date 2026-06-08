@@ -85,7 +85,7 @@ export const Layout = ({
       </nav>
       <div className="mt-4 shrink-0">
         <div className="mb-3 flex justify-end">
-          <SmartAlertsCenter alerts={alerts} />
+          <SmartAlertsCenter alerts={alerts} theme={theme} />
         </div>
         <button type="button" onClick={onToggleAmountsHidden} className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-semibold text-muted transition hover:bg-white/15">
           {amountsHidden ? <Eye size={17} /> : <EyeOff size={17} />}
@@ -123,7 +123,7 @@ export const Layout = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <SmartAlertsCenter alerts={alerts} />
+          <SmartAlertsCenter alerts={alerts} theme={theme} />
           <button type="button" onClick={onToggleAmountsHidden} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-muted">
             {amountsHidden ? <Eye size={20} /> : <EyeOff size={20} />}
           </button>

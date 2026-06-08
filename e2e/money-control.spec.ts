@@ -17,6 +17,8 @@ const demoLogin = async (page: import("@playwright/test").Page) => {
 test("demo login opens Dashboard", async ({ page }) => {
   await demoLogin(page);
   await expect(page.getByText("План недели")).toBeVisible();
+  await page.getByRole("button", { name: "Уведомления" }).click();
+  await expect(page.getByText("Ближайший платёж")).toBeVisible();
 });
 
 test("registration and onboarding open the app", async ({ page }) => {
