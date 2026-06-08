@@ -148,7 +148,7 @@ export const QuickAddModal = ({
           transition={{ duration: reduced ? 0.12 : 0.2, ease: "easeOut" }}
         >
       <motion.div
-        className="glass-panel w-full max-w-lg rounded-t-[30px] p-5 shadow-soft sm:rounded-5xl"
+        className="glass-panel max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-[30px] p-5 shadow-soft sm:rounded-5xl"
         initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 16 }}
         animate={reduced ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
         exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 14 }}
@@ -180,10 +180,11 @@ export const QuickAddModal = ({
           ))}
         </div>
         {mode === "expense" ? (
-          <div className="mb-4 rounded-3xl bg-slate-50 p-3">
+          <div className="mb-4 rounded-[28px] border border-white/10 bg-slate-50 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Smart input</p>
             <div className="flex gap-2">
-              <input className={inputClass} value={quickText} onChange={(e) => setQuickText(e.target.value)} placeholder="Быстрый ввод: кофе 250" />
-              <button className={ghostButtonClass} type="button" onClick={submitQuickText}>OK</button>
+              <input className={`${inputClass} premium-input text-base font-semibold`} value={quickText} onChange={(e) => setQuickText(e.target.value)} placeholder="Быстрый ввод: кофе 250" />
+              <button className={`${ghostButtonClass} px-5`} type="button" onClick={submitQuickText}>OK</button>
             </div>
           </div>
         ) : null}

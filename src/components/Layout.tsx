@@ -71,11 +71,14 @@ export const Layout = ({
             key={item.key}
             type="button"
             onClick={() => setActivePage(item.key)}
-            className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition ${
-              activePage === item.key ? "bg-white/90 text-slate-950 shadow-card" : "text-slate-300 hover:bg-white/10"
+            className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition ${
+              activePage === item.key ? "bg-white/10 text-ink shadow-card" : "text-slate-300 hover:bg-white/10"
             }`}
           >
-            <item.icon size={19} />
+            {activePage === item.key ? <motion.span layoutId="desktop-nav-indicator" className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-blue-300 shadow-[0_0_18px_rgba(96,165,250,0.45)]" /> : null}
+            <motion.span animate={activePage === item.key && !reduced ? { scale: 1.08, y: -1 } : { scale: 1, y: 0 }} transition={{ duration: 0.18, ease: "easeOut" }}>
+              <item.icon size={19} />
+            </motion.span>
             {item.label}
           </button>
         ))}
@@ -144,18 +147,21 @@ export const Layout = ({
       Добавить
     </motion.button>
 
-    <nav className="glass-bottom-nav fixed bottom-0 left-0 right-0 z-20 px-2 py-2 shadow-soft backdrop-blur-2xl lg:hidden">
+    <nav className="glass-bottom-nav fixed bottom-0 left-0 right-0 z-20 px-3 py-3 shadow-soft backdrop-blur-2xl lg:hidden">
       <div className="grid grid-cols-5 gap-1">
         {mobileNavItems.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => setActivePage(item.key)}
-            className={`flex min-h-14 flex-col items-center justify-center rounded-2xl px-1 text-[10px] font-semibold transition ${
-              activePage === item.key ? "bg-white/90 text-slate-950" : "text-slate-300 hover:bg-white/10"
+            className={`relative flex min-h-14 flex-col items-center justify-center overflow-hidden rounded-2xl px-1 text-[10px] font-semibold transition ${
+              activePage === item.key ? "bg-white/10 text-ink" : "text-slate-300 hover:bg-white/10"
             }`}
           >
-            <item.icon size={18} />
+            {activePage === item.key ? <motion.span layoutId="mobile-nav-pill" className="absolute inset-x-1 top-1 h-1 rounded-full bg-blue-300/80 shadow-[0_0_18px_rgba(96,165,250,0.48)]" /> : null}
+            <motion.span animate={activePage === item.key && !reduced ? { y: -1, scale: 1.08 } : { y: 0, scale: 1 }} transition={{ duration: 0.18, ease: "easeOut" }}>
+              <item.icon size={18} />
+            </motion.span>
             <span className="mt-1 truncate">{item.label}</span>
           </button>
         ))}

@@ -336,10 +336,19 @@ export const ProfilePage = ({ user, financeState, theme, authError, onThemeChang
                 key={option.id}
                 type="button"
                 onClick={() => onThemeChange(option.id)}
-                className={`liquid-hover rounded-3xl border p-4 text-left transition ${theme === option.id ? "border-blue-300/60 bg-blue-400/10 shadow-[0_0_34px_rgba(96,165,250,0.22)]" : "border-white/10 bg-slate-50"}`}
+                className={`liquid-hover rounded-[28px] border p-3 text-left transition ${theme === option.id ? "border-blue-300/60 bg-blue-400/10 shadow-[0_0_34px_rgba(96,165,250,0.22)]" : "border-white/10 bg-slate-50"}`}
               >
-                <div className="mb-4 flex gap-2">
-                  {option.swatches.map((color) => <span key={color} className="h-8 flex-1 rounded-2xl border border-white/10" style={{ backgroundColor: color }} />)}
+                <div
+                  className="mb-4 overflow-hidden rounded-[22px] border border-white/10 p-3"
+                  style={{ background: `linear-gradient(135deg, ${option.swatches[0]}, ${option.swatches[1]})` }}
+                >
+                  <div className="h-16 rounded-[18px] border border-white/20 bg-white/20 p-3 shadow-card backdrop-blur-md">
+                    <div className="h-2 w-16 rounded-full bg-white/60" />
+                    <div className="mt-3 h-5 w-24 rounded-full bg-white/35" />
+                  </div>
+                  <div className="mt-3 flex gap-1.5">
+                    {option.swatches.map((color) => <span key={color} className="h-5 flex-1 rounded-full border border-white/20" style={{ backgroundColor: color }} />)}
+                  </div>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <div>

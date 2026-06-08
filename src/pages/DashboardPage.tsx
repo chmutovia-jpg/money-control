@@ -1,5 +1,6 @@
 import { BarChart3, CreditCard, Lightbulb, PiggyBank, Repeat, Target, TrendingDown, TrendingUp, Wallet, Zap } from "lucide-react";
 import { useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, EmptyState, SectionHeader } from "../components/Card";
 import { ProgressBar } from "../components/ProgressBar";
@@ -25,6 +26,7 @@ export const DashboardPage = ({
   onRestoreDemo: () => void;
 }) => {
   const [stressAmount, setStressAmount] = useState("");
+  const reduced = useReducedMotion();
   const month = currentMonth();
   const income = getTotalByType(state.transactions, "income", month);
   const expenses = getTotalByType(state.transactions, "expense", month);
@@ -57,10 +59,12 @@ export const DashboardPage = ({
       ? `На этой неделе снизь траты в категории "${riskyBudgets[0].category}".`
       : "Неделя выглядит спокойной: держи дневной лимит и не забывай про цели.";
   const temperatureClasses = {
-    green: "border-emerald-300/25 bg-emerald-400/10 text-emerald-100",
-    yellow: "border-amber-300/25 bg-amber-400/10 text-amber-100",
-    red: "border-rose-300/25 bg-rose-400/10 text-rose-100",
+    green: "border-emerald-300/25 bg-emerald-400/10 text-emerald-100 shadow-[0_0_38px_rgba(52,211,153,0.08)]",
+    yellow: "border-amber-300/25 bg-amber-400/10 text-amber-100 shadow-[0_0_38px_rgba(251,191,36,0.08)]",
+    red: "border-rose-300/25 bg-rose-400/10 text-rose-100 shadow-[0_0_38px_rgba(251,113,133,0.1)]",
   };
+  const temperatureIndex = temperature.status === "green" ? 0 : temperature.status === "yellow" ? 1 : 2;
+  const temperaturePosition = temperature.status === "green" ? "10%" : temperature.status === "yellow" ? "50%" : "90%";
 
   return (
     <div>
@@ -80,44 +84,71 @@ export const DashboardPage = ({
         </div>
       </div>
 
-      <section className={`glass-panel mb-5 rounded-[28px] p-6 shadow-soft ${daily.isNegative ? "border-rose-300/30" : ""}`}>
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-muted">Сегодня можно потратить</p>
-            <p className={`mt-3 text-5xl font-bold leading-none sm:text-6xl ${daily.isNegative ? "text-rose-300" : "text-ink"}`}>
-              <AnimatedNumber value={Math.floor(daily.dailyLimit)} />
-            </p>
-            <p className={`mt-4 inline-flex rounded-full px-4 py-2 text-sm font-semibold ${problemBudget ? "bg-rose-400/10 text-rose-200" : warningBudget ? "bg-amber-400/10 text-amber-100" : "bg-emerald-400/10 text-emerald-200"}`}>
-              {daily.isNegative ? "Лимит ушёл в минус" : budgetStatus}
-            </p>
+      <motion.section
+        className={`premium-hero relative mb-8 overflow-hidden rounded-[34px] p-5 shadow-soft sm:p-7 lg:p-8 ${daily.isNegative ? "border-rose-300/30" : ""}`}
+        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.985 }}
+        animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: reduced ? 0.12 : 0.42, ease: "easeOut" }}
+      >
+        <div className="relative z-10 grid gap-7 xl:grid-cols-[1.1fr_0.9fr] xl:items-stretch">
+          <div className="flex min-h-[310px] flex-col justify-between">
+            <div className={`inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${temperatureClasses[temperature.status]}`}>
+              <span className="h-2.5 w-2.5 rounded-full bg-current shadow-[0_0_18px_currentColor]" />
+              Финансовая температура: {temperature.title}
+            </div>
+            <div className="mt-8">
+              <p className="text-sm font-semibold uppercase tracking-wide text-muted">Сегодня можно потратить</p>
+              <p className={`mt-3 text-[3.8rem] font-semibold leading-[0.92] tracking-normal sm:text-[5.6rem] lg:text-[6.4rem] ${daily.isNegative ? "text-rose-300" : "text-ink"}`}>
+                <AnimatedNumber value={Math.floor(daily.dailyLimit)} />
+              </p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={temperature.title}
+                  className="mt-5 max-w-xl text-base leading-7 text-muted"
+                  initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
+                  animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reduced ? 0.1 : 0.22, ease: "easeOut" }}
+                >
+                  {temperature.advice}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+            <div className="mt-8">
+              <div className="temperature-scale">
+                <motion.span
+                  className="absolute top-1/2 z-10 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white bg-white shadow-[0_0_24px_rgba(255,255,255,0.5)]"
+                  initial={false}
+                  animate={{ left: temperaturePosition }}
+                  transition={{ duration: reduced ? 0.1 : 0.38, ease: "easeOut" }}
+                  style={{ marginLeft: "-10px" }}
+                />
+              </div>
+              <div className="mt-3 grid grid-cols-3 text-xs font-semibold text-muted">
+                <span className={temperatureIndex === 0 ? "text-emerald-300" : ""}>Спокойно</span>
+                <span className={`text-center ${temperatureIndex === 1 ? "text-amber-200" : ""}`}>Осторожно</span>
+                <span className={`text-right ${temperatureIndex === 2 ? "text-rose-200" : ""}`}>Риск</span>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">Баланс</p><p className="mt-1 font-bold text-ink"><AnimatedNumber value={balance} /></p></div>
-            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">До конца</p><p className="mt-1 font-bold text-ink">{daily.daysLeft} дн.</p></div>
-            <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs text-muted">Свободно</p><p className="mt-1 font-bold text-ink"><AnimatedNumber value={daily.freeMoney} /></p></div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <HeroMetric label="Баланс" value={balance} delay={0.08} />
+            <HeroMetric label="Прогноз месяца" value={Math.floor(forecast.forecast)} delay={0.14} tone={forecast.forecast < 0 ? "text-rose-300" : "text-blue-200"} />
+            <HeroMetric label="До конца месяца" text={`${daily.daysLeft} дн.`} delay={0.2} />
+            <HeroMetric label="Свободно" value={daily.freeMoney} delay={0.26} tone={daily.freeMoney < 0 ? "text-rose-300" : "text-emerald-200"} />
+            <motion.div
+              className={`sm:col-span-2 rounded-[28px] border p-4 ${problemBudget ? "border-rose-300/25 bg-rose-400/10" : warningBudget ? "border-amber-300/25 bg-amber-400/10" : "border-white/10 bg-white/10"}`}
+              initial={reduced ? { opacity: 0 } : { opacity: 0, y: 10 }}
+              animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              transition={{ duration: reduced ? 0.1 : 0.28, delay: reduced ? 0 : 0.3, ease: "easeOut" }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">Статус бюджета</p>
+              <p className="mt-2 text-lg font-semibold text-ink">{daily.isNegative ? "Лимит ушёл в минус" : budgetStatus}</p>
+            </motion.div>
           </div>
         </div>
-      </section>
-
-      <div className="mb-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <Card className={`border ${temperatureClasses[temperature.status]}`}>
-          <SectionHeader title="Финансовая температура" />
-          <p className="text-3xl font-bold">{temperature.title}</p>
-          <p className="mt-2 text-sm">{temperature.advice}</p>
-        </Card>
-        <Card>
-          <SectionHeader title="А что если?" />
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <input className="rounded-2xl border border-white/10 bg-slate-50 px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-blue-300/40" type="number" min="0" value={stressAmount} onChange={(e) => setStressAmount(e.target.value)} placeholder="Сумма покупки" />
-            <div className={`rounded-2xl px-4 py-3 text-sm font-bold ${stress.isRisky ? "bg-rose-400/10 text-rose-200" : "bg-emerald-400/10 text-emerald-200"}`}>{stress.isRisky ? "Рискованно" : "Допустимо"}</div>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Новый дневной лимит</p><p className="font-bold">{formatCurrency(stress.newDailyLimit)}</p></div>
-            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Прогноз месяца</p><p className="font-bold">{formatCurrency(stress.newForecast)}</p></div>
-            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Влияние на цели</p><p className="font-bold">{stress.goalImpactPercent}%</p></div>
-          </div>
-        </Card>
-      </div>
+      </motion.section>
 
       <Card className="mb-5">
         <SectionHeader title="План недели" action={<Lightbulb size={20} className="text-blue-300" />} />
@@ -175,24 +206,57 @@ export const DashboardPage = ({
         <StatCard label="Можно тратить в день" value={formatCurrency(Math.floor(daily.dailyLimit))} numericValue={Math.floor(daily.dailyLimit)} icon={PiggyBank} tone={daily.isNegative ? "red" : "green"} hint={daily.isNegative ? "Свободные деньги ушли в минус" : `На ${daily.daysLeft} дн. до конца месяца`} delay={0.46} />
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+      <Card className="mt-8">
+        <SectionHeader title="А что если?" action={<span className={`rounded-full px-3 py-1 text-xs font-semibold ${stress.isRisky ? "bg-rose-400/10 text-rose-200" : "bg-emerald-400/10 text-emerald-200"}`}>{stress.isRisky ? "Риск покупки" : "Покупка допустима"}</span>} />
+        <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-stretch">
+          <div className="rounded-[28px] border border-white/10 bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Сумма покупки</p>
+            <input
+              className="premium-input mt-3 w-full rounded-[24px] px-5 py-5 text-3xl font-semibold text-ink outline-none placeholder:text-muted focus:border-blue-300/50 sm:text-4xl"
+              type="number"
+              min="0"
+              value={stressAmount}
+              onChange={(e) => setStressAmount(e.target.value)}
+              placeholder="0 ₽"
+            />
+            <p className="mt-3 text-sm leading-6 text-muted">Покажем, как покупка изменит дневной лимит, прогноз месяца и цели.</p>
+          </div>
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              key={stressAmount || "empty-stress"}
+              className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+              initial={reduced ? { opacity: 0 } : { opacity: 0, y: 10 }}
+              animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reduced ? 0 : -6 }}
+              transition={{ duration: reduced ? 0.1 : 0.22, ease: "easeOut" }}
+            >
+              <StressMetric label="Новый дневной лимит" value={formatCurrency(stress.newDailyLimit)} />
+              <StressMetric label="Прогноз конца месяца" value={formatCurrency(stress.newForecast)} />
+              <StressMetric label="Влияние на цели" value={`${stress.goalImpactPercent}%`} />
+              <StressMetric label="Риск покупки" value={stress.isRisky ? "Высокий" : "Низкий"} tone={stress.isRisky ? "text-rose-300" : "text-emerald-300"} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </Card>
+
+      <div className="mt-8 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <SectionHeader title="Прогноз денег" />
           <p className="text-3xl font-bold text-ink"><AnimatedNumber value={Math.floor(forecast.forecast)} /></p>
           <p className="mt-2 text-sm text-muted">Если продолжишь тратить в таком темпе, в конце месяца останется {formatCurrency(Math.floor(forecast.forecast))}.</p>
           <div className="mt-5 grid grid-cols-3 gap-2">
-            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Сегодня</p><p className="font-bold">{formatCurrency(balance)}</p></div>
-            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Через 7 дней</p><p className="font-bold">{formatCurrency(Math.floor(balance - forecast.averageDailyExpense * 7))}</p></div>
-            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Конец месяца</p><p className="font-bold">{formatCurrency(Math.floor(forecast.forecast))}</p></div>
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Сегодня</p><p className="font-semibold"><AnimatedNumber value={balance} /></p></div>
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Через 7 дней</p><p className="font-semibold"><AnimatedNumber value={Math.floor(balance - forecast.averageDailyExpense * 7)} /></p></div>
+            <div className="rounded-3xl bg-slate-50 p-3"><p className="text-xs text-muted">Конец месяца</p><p className="font-semibold"><AnimatedNumber value={Math.floor(forecast.forecast)} /></p></div>
           </div>
           <div className="mt-5 space-y-2">
-            {nearestPayments.map((payment) => <div key={payment.id} className="flex justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm"><span>{payment.title}</span><strong>{formatCurrency(payment.amount)}</strong></div>)}
+            {nearestPayments.map((payment) => <div key={payment.id} className="flex justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm"><span>{payment.title}</span><strong><AnimatedNumber value={payment.amount} /></strong></div>)}
           </div>
         </Card>
         <Card>
           <SectionHeader title="Баланс по счетам" />
           <div className="space-y-3">
-            {accountBalances.map((account) => <div key={account.id} className="flex items-center justify-between rounded-3xl bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="h-4 w-4 rounded-full" style={{ backgroundColor: account.color }} /><div><p className="font-semibold">{account.name}</p><p className="text-sm text-muted">{account.type}</p></div></div><p className="font-bold">{formatCurrency(account.currentBalance)}</p></div>)}
+            {accountBalances.map((account) => <div key={account.id} className="flex items-center justify-between rounded-3xl bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="h-4 w-4 rounded-full" style={{ backgroundColor: account.color }} /><div><p className="font-semibold">{account.name}</p><p className="text-sm text-muted">{account.type}</p></div></div><p className="font-semibold"><AnimatedNumber value={account.currentBalance} /></p></div>)}
           </div>
         </Card>
       </div>
@@ -231,7 +295,7 @@ export const DashboardPage = ({
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <p className="font-bold text-ink">{budget.category}</p>
-                <p className="text-sm text-muted">{formatCurrency(budget.spent)} из {formatCurrency(budget.monthlyLimit)}</p>
+                <p className="text-sm text-muted"><AnimatedNumber value={budget.spent} /> из {formatCurrency(budget.monthlyLimit)}</p>
               </div>
               <p className={`text-sm font-bold ${budget.status === "over" ? "text-rose-300" : budget.status === "warning" ? "text-amber-200" : "text-blue-300"}`}>{budget.percent}%</p>
             </div>
@@ -252,9 +316,31 @@ export const DashboardPage = ({
         <SectionHeader title="Прогресс по целям" />
         {state.goals.length ? <div className="grid gap-4 md:grid-cols-2">{state.goals.map((goal) => {
           const percent = goal.targetAmount ? Math.round((goal.currentAmount / goal.targetAmount) * 100) : 0;
-          return <div key={goal.id} className="rounded-3xl bg-slate-50 p-4"><div className="mb-3 flex items-center justify-between"><p className="font-bold">{goal.title}</p><p className="text-sm font-semibold text-blue-300">{percent}%</p></div><ProgressBar value={percent} /><p className="mt-2 text-sm text-muted">{formatCurrency(goal.currentAmount)} из {formatCurrency(goal.targetAmount)}</p></div>;
+          return <div key={goal.id} className="rounded-3xl bg-slate-50 p-4"><div className="mb-3 flex items-center justify-between"><p className="font-bold">{goal.title}</p><p className="text-sm font-semibold text-blue-300">{percent}%</p></div><ProgressBar value={percent} /><p className="mt-2 text-sm text-muted"><AnimatedNumber value={goal.currentAmount} /> из {formatCurrency(goal.targetAmount)}</p></div>;
         })}</div> : <EmptyState title="Целей нет" text="Создай первую цель накоплений." />}
       </Card>
     </div>
   );
 };
+
+const HeroMetric = ({ label, value, text, tone = "text-ink", delay = 0 }: { label: string; value?: number; text?: string; tone?: string; delay?: number }) => {
+  const reduced = useReducedMotion();
+  return (
+    <motion.div
+      className="rounded-[28px] border border-white/10 bg-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 10 }}
+      animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
+      transition={{ duration: reduced ? 0.1 : 0.28, delay: reduced ? 0 : delay, ease: "easeOut" }}
+    >
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
+      <p className={`mt-3 text-2xl font-semibold leading-tight ${tone}`}>{typeof value === "number" ? <AnimatedNumber value={value} /> : text}</p>
+    </motion.div>
+  );
+};
+
+const StressMetric = ({ label, value, tone = "text-ink" }: { label: string; value: string; tone?: string }) => (
+  <div className="rounded-[24px] border border-white/10 bg-slate-50 p-4">
+    <p className="text-xs text-muted">{label}</p>
+    <p className={`mt-2 text-lg font-semibold ${tone}`}>{value}</p>
+  </div>
+);

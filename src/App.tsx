@@ -40,6 +40,7 @@ const App = () => {
   const [pinError, setPinError] = useState(false);
   const [splashVisible, setSplashVisible] = useState(true);
   const [economyMode, setEconomyMode] = useState(() => safeGetItem("money-control-economy-mode") === "true");
+  const [unlockRevealKey, setUnlockRevealKey] = useState(0);
   const reduced = useReducedMotion();
   const auth = useAuth();
   const theme = useTheme();
@@ -141,6 +142,7 @@ const App = () => {
             if (pinOk) {
               setLocked(false);
               setPinInput("");
+              setUnlockRevealKey((value) => value + 1);
             } else {
               setPinError(true);
               window.setTimeout(() => setPinError(false), 420);
@@ -188,9 +190,16 @@ const App = () => {
 
   return (
     <>
-      <Layout activePage={activePage} setActivePage={setActivePage} user={auth.currentUser} onLogout={auth.logout} onQuickAdd={() => setQuickAddOpen(true)} amountsHidden={amountsHidden} onToggleAmountsHidden={toggleAmountsHidden} theme={theme.theme} alerts={getSmartAlerts(finance.state)}>
-        <PageTransition key={activePage}>{page}</PageTransition>
-      </Layout>
+      <motion.div
+        key={unlockRevealKey}
+        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 10, filter: "blur(8px)" }}
+        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        transition={{ duration: reduced ? 0.12 : 0.38, ease: "easeOut" }}
+      >
+        <Layout activePage={activePage} setActivePage={setActivePage} user={auth.currentUser} onLogout={auth.logout} onQuickAdd={() => setQuickAddOpen(true)} amountsHidden={amountsHidden} onToggleAmountsHidden={toggleAmountsHidden} theme={theme.theme} alerts={getSmartAlerts(finance.state)}>
+          <PageTransition key={activePage}>{page}</PageTransition>
+        </Layout>
+      </motion.div>
       <QuickAddModal
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}

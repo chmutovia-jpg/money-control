@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { formatCurrency } from "../utils/format";
+import { areAmountsHidden, formatCurrency } from "../utils/format";
 
 export const PageTransition = ({ children }: { children: ReactNode }) => {
   const reduced = useReducedMotion();
@@ -76,11 +76,21 @@ export const AnimatedNumber = ({
   }, [reduced, value]);
 
   const rounded = Math.round(display);
+  const hidden = currency && areAmountsHidden();
   const rendered = currency ? formatCurrency(rounded) : `${rounded}${suffix}`;
   return (
-    <motion.span className="inline-block whitespace-nowrap tabular-nums" animate={{ opacity: 1 }} initial={{ opacity: 0.72 }} transition={{ duration: reduced ? 0.08 : 0.18, ease: "easeOut" }}>
-      {rendered}
-    </motion.span>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.span
+        key={hidden ? "hidden" : "visible"}
+        className="inline-block whitespace-nowrap tabular-nums"
+        initial={{ opacity: 0, y: reduced ? 0 : 4, filter: "blur(3px)" }}
+        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        exit={{ opacity: 0, y: reduced ? 0 : -4, filter: "blur(3px)" }}
+        transition={{ duration: reduced ? 0.08 : 0.18, ease: "easeOut" }}
+      >
+        {rendered}
+      </motion.span>
+    </AnimatePresence>
   );
 };
 
