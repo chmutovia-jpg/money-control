@@ -80,3 +80,87 @@ test("JSON export and import work", async ({ page }, testInfo) => {
   await fileChooser.setFiles(importPath);
   await expect(page.getByText("Данные импортированы.")).toBeVisible({ timeout: 10_000 });
 });
+
+test("mobile bottom navigation stays fixed while scrolling", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await demoLogin(page);
+  const before = await page.locator("nav.glass-bottom-nav").boundingBox();
+  await page.mouse.wheel(0, 1200);
+  await page.waitForTimeout(150);
+  const after = await page.locator("nav.glass-bottom-nav").boundingBox();
+  expect(before).not.toBeNull();
+  expect(after).not.toBeNull();
+  expect(Math.round(after!.y)).toBe(Math.round(before!.y));
+});
+
+test("core product sections work", async ({ page }) => {
+  await demoLogin(page);
+
+  await page.goto("/?page=accounts");
+  await expect(page.getByRole("heading", { name: "Счета", exact: true })).toBeVisible();
+  await page.getByLabel("Название").fill("Тестовый счёт");
+  await page.getByLabel("Стартовый баланс").fill("12345");
+  await page.locator("form").getByRole("button", { name: "Добавить" }).click();
+  await expect(page.getByText("Счёт создан")).toBeVisible();
+  await expect(page.getByText("Тестовый счёт")).toBeVisible();
+
+  await page.goto("/?page=income");
+  await expect(page.getByRole("heading", { name: "Доходы", exact: true })).toBeVisible();
+  await page.getByLabel("Сумма").fill("7777");
+  await page.getByLabel("Комментарий").fill("E2E доход");
+  await page.getByText("Регулярная операция").click();
+  await page.locator("form").getByRole("button", { name: "Добавить" }).click();
+  await expect(page.getByText("Доход добавлен")).toBeVisible();
+
+  await page.goto("/?page=expenses");
+  await expect(page.getByRole("heading", { name: "Расходы", exact: true })).toBeVisible();
+  await page.getByLabel("Сумма").fill("333");
+  await page.getByLabel("Комментарий").fill("E2E расход");
+  await page.locator("form").getByRole("button", { name: "Добавить" }).click();
+  await expect(page.getByText("Расход добавлен")).toBeVisible();
+
+  await page.goto("/?page=subscriptions");
+  await expect(page.getByRole("heading", { name: "Подписки", exact: true })).toBeVisible();
+  await page.getByLabel("Название").fill("E2E подписка");
+  await page.getByLabel("Стоимость").fill("499");
+  await page.locator("form").getByRole("button", { name: "Добавить" }).click();
+  await expect(page.getByText("Подписка добавлена")).toBeVisible();
+
+  await page.goto("/?page=debts");
+  await expect(page.getByRole("heading", { name: "Долги", exact: true })).toBeVisible();
+  await page.getByLabel("Кому или от кого").fill("E2E человек");
+  await page.getByLabel("Сумма").fill("1500");
+  await page.locator("form").getByRole("button", { name: "Добавить" }).click();
+  await expect(page.getByText("Долг добавлен")).toBeVisible();
+
+  await page.goto("/?page=goals");
+  await expect(page.getByRole("heading", { name: "Цели", exact: true })).toBeVisible();
+  await page.getByLabel("Название").fill("E2E цель");
+  await page.getByLabel("Нужная сумма").fill("10000");
+  await page.getByLabel("Уже накоплено").fill("1000");
+  await page.locator("form").getByRole("button", { name: "Добавить" }).click();
+  await expect(page.getByText("Цель добавлена")).toBeVisible();
+
+  await page.goto("/?page=budgets");
+  await expect(page.getByRole("heading", { name: "Бюджеты", exact: true })).toBeVisible();
+  await page.getByLabel("Лимит в месяц").fill("9999");
+  await page.locator("form").getByRole("button", { name: "Добавить" }).click();
+  await expect(page.getByText("Бюджет сохранён")).toBeVisible();
+
+  await page.goto("/?page=calendar");
+  await expect(page.getByRole("heading", { name: "Календарь платежей", exact: true })).toBeVisible();
+  await expect(page.getByText("Cashflow до конца месяца")).toBeVisible();
+
+  await page.goto("/?page=analytics");
+  await expect(page.getByRole("heading", { name: "Аналитика", exact: true })).toBeVisible();
+  const imageDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Сохранить как изображение" }).click();
+  expect((await imageDownload).suggestedFilename()).toContain("month-wrapped");
+
+  await page.goto("/?page=profile");
+  await expect(page.getByRole("heading", { name: "Настройки", exact: true })).toBeVisible();
+  await page.getByLabel("Пароль для защищённого backup").fill("secret123");
+  const protectedDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Защищённый backup" }).click();
+  expect((await protectedDownload).suggestedFilename()).toContain("protected-backup");
+});

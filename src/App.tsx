@@ -192,9 +192,9 @@ const App = () => {
     <>
       <motion.div
         key={unlockRevealKey}
-        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 10, filter: "blur(8px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        transition={{ duration: reduced ? 0.12 : 0.38, ease: "easeOut" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: reduced ? 0.12 : 0.32, ease: "easeOut" }}
       >
         <Layout activePage={activePage} setActivePage={setActivePage} user={auth.currentUser} onLogout={auth.logout} onQuickAdd={() => setQuickAddOpen(true)} amountsHidden={amountsHidden} onToggleAmountsHidden={toggleAmountsHidden} theme={theme.theme} alerts={getSmartAlerts(finance.state)}>
           <PageTransition key={activePage}>{page}</PageTransition>
